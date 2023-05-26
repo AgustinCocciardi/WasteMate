@@ -40,6 +40,7 @@ public class Sensores extends AppCompatActivity {
                 {
                     Log.i("Ejecutando", String.valueOf(limitePeso.getText()));
                     Log.i("Ejecutando", String.valueOf(limiteCapacidad.getText()));
+                    //Comentario para probar commits
                 }
             }
         });
