@@ -7,7 +7,7 @@
     tools:context=".Sensores">
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/etiquetaCapacidad"
         android:layout_width="163dp"
         android:layout_height="47dp"
         android:autoText="false"
@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.064"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3"
+        app:layout_constraintTop_toBottomOf="@+id/etiquetaPeso"
         app:layout_constraintVertical_bias="0.204" />
 
     <TextView
@@ -37,7 +37,7 @@
         app:layout_constraintVertical_bias="0.297" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/etiquetaPeso"
         android:layout_width="162dp"
         android:layout_height="49dp"
         android:layout_marginTop="60dp"

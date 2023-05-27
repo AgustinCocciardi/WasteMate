@@ -1,6 +1,8 @@
 package soadv.grupom2.wastemate;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,23 +14,34 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import org.w3c.dom.Text;
 
-public class Sensores extends AppCompatActivity {
+public class Sensores extends AppCompatActivity  {
 
     private final static double pesoMaximo = 150;
     private final static double capacidadMaxima = 50;
     private TextView limitePeso;
     private TextView limiteCapacidad;
+    private TextView etiquetaPeso;
+    private TextView etiquetaCapacidad;
     private Button grabarBoton;
+    private SensorManager sensor;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensores);
+        etiquetaPeso = findViewById(R.id.etiquetaPeso);
+        etiquetaCapacidad = findViewById(R.id.etiquetaCapacidad);
         limitePeso = findViewById(R.id.limitePeso);
         limitePeso.setText(Double.toString(pesoMaximo));
         limiteCapacidad = findViewById(R.id.limiteCapacidad);
         limiteCapacidad.setText(Double.toString(capacidadMaxima));
         grabarBoton = (Button) findViewById(R.id.botonGrabar);
+        etiquetaCapacidad.setVisibility(View.GONE);
+        etiquetaPeso.setVisibility(View.GONE);
+        limiteCapacidad.setVisibility(View.GONE);
+        limitePeso.setVisibility(View.GONE);
+        grabarBoton.setVisibility(View.GONE);
         grabarBoton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -40,7 +53,6 @@ public class Sensores extends AppCompatActivity {
                 {
                     Log.i("Ejecutando", String.valueOf(limitePeso.getText()));
                     Log.i("Ejecutando", String.valueOf(limiteCapacidad.getText()));
-                    //Comentario para probar commits
                 }
             }
         });
