@@ -93,4 +93,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/limiteCapacidad"
         app:layout_constraintVertical_bias="0.008" />
+
+    <TextView
+        android:id="@+id/etiquetaShake"
+        android:layout_width="184dp"
+        android:layout_height="37dp"
+        android:layout_marginTop="128dp"
+        android:text="Shake it!"
+        android:textAlignment="center"
+        android:textSize="34sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.506"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2"
+        app:layout_constraintVertical_bias="0.006" />
 </androidx.constraintlayout.widget.ConstraintLayout>
