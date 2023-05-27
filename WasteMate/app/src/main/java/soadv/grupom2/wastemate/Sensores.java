@@ -22,7 +22,7 @@ import org.w3c.dom.Text;
 
 public class Sensores extends Activity implements SensorEventListener, CompoundButton.OnCheckedChangeListener {
 
-    private final static float cambioPrecision = 10;
+    private final static float cambioPrecision = 30;
     private final static double pesoMaximo = 150;
     private final static double capacidadMaxima = 50;
     private TextView limitePeso;

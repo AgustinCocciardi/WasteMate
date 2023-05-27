@@ -8,8 +8,8 @@
 
     <TextView
         android:id="@+id/etiquetaCapacidad"
-        android:layout_width="163dp"
-        android:layout_height="47dp"
+        android:layout_width="178dp"
+        android:layout_height="54dp"
         android:autoText="false"
         android:text="Limite Capacidad"
         android:textAlignment="center"
@@ -23,8 +23,8 @@
 
     <TextView
         android:id="@+id/textView2"
-        android:layout_width="187dp"
-        android:layout_height="74dp"
+        android:layout_width="225dp"
+        android:layout_height="92dp"
         android:gravity="center"
         android:text="WasteMate"
         android:textAlignment="center"
@@ -54,10 +54,10 @@
 
     <EditText
         android:id="@+id/limitePeso"
-        android:layout_width="196dp"
-        android:layout_height="45dp"
+        android:layout_width="137dp"
+        android:layout_height="49dp"
         android:layout_marginTop="72dp"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="44dp"
         android:ems="10"
         android:inputType="numberDecimal"
         android:textSize="20sp"
@@ -68,15 +68,15 @@
 
     <EditText
         android:id="@+id/limiteCapacidad"
-        android:layout_width="194dp"
-        android:layout_height="49dp"
+        android:layout_width="146dp"
+        android:layout_height="47dp"
         android:layout_marginTop="68dp"
         android:ems="10"
         android:inputType="numberDecimal"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.945"
+        app:layout_constraintHorizontal_bias="0.83"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/limitePeso"
         app:layout_constraintVertical_bias="0.0" />
@@ -85,19 +85,19 @@
         android:id="@+id/botonGrabar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="72dp"
+        android:layout_marginTop="24dp"
         android:text="Grabar"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/limiteCapacidad"
-        app:layout_constraintVertical_bias="0.008" />
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/etiquetaShake"
-        android:layout_width="184dp"
-        android:layout_height="37dp"
+        android:layout_width="183dp"
+        android:layout_height="49dp"
         android:layout_marginTop="128dp"
         android:text="Shake it!"
         android:textAlignment="center"
