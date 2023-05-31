@@ -7,10 +7,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button boton;
+    private ImageButton botonCapacidad;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,10 +20,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         boton = (Button) findViewById(R.id.boton);
+        botonCapacidad = (ImageButton) findViewById(R.id.botonCapacidad);
         boton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, Sensores.class);
+                startActivity(intent);
+            }
+        });
+        botonCapacidad.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, Capacidad.class);
                 startActivity(intent);
             }
         });
