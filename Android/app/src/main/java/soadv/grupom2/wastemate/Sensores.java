@@ -62,6 +62,7 @@ public class Sensores extends Activity implements SensorEventListener, CompoundB
                 }
                 else
                 {
+                    //Pasar con Bluetooth
                     Log.i("Ejecutando", String.valueOf(limitePeso.getText()));
                     Log.i("Ejecutando", String.valueOf(limiteCapacidad.getText()));
                 }
