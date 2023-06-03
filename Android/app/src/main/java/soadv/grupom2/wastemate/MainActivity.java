@@ -8,11 +8,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button boton;
     private ImageButton botonCapacidad;
+
+    private TextView estadoBluetooth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
         boton = (Button) findViewById(R.id.boton);
         botonCapacidad = (ImageButton) findViewById(R.id.botonCapacidad);
+        estadoBluetooth = (TextView) findViewById(R.id.bluetoothEstado);
         boton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
