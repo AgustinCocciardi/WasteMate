@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showEnabled() {
-        txtEstado.setText("Bluetooth Habilitar");
+        txtEstado.setText("Bluetooth Activado");
         txtEstado.setTextColor(Color.BLUE);
 
         btnActivar.setText("Desactivar");
@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDisabled() {
-        txtEstado.setText("Bluetooth Deshabilitado");
+        txtEstado.setText("Bluetooth Desactivado");
         txtEstado.setTextColor(Color.RED);
 
         btnActivar.setText("Activar");
