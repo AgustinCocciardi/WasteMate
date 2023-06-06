@@ -307,7 +307,8 @@ bool verify_presence()
 bool verify_weight()
 {
   int value = analogRead(FLEX_SENSOR);              
-  int degrees = map(value, MINIMUM_VALUE_FLEX_SENSOR, MAXIMUM_VALUE_FLEX_SENSOR, _0_DEGREES, _180_DEGREES);   
+  int degrees = map(value, MINIMUM_VALUE_FLEX_SENSOR, MAXIMUM_VALUE_FLEX_SENSOR, _0_DEGREES, _180_DEGREES);  
+
   if(degrees >= MAXIMUM_FLEXIBILITY)
   {
     current_event = EV_MAX_WR;
@@ -527,7 +528,6 @@ void calibrate_pir()
   char is_ok = 'n';
   do
   {
-    Serial.println("Se inicia la calibración del sensor PIR. Ingrese 'y' cuando detecte que el sensor se estabilizo y no detecta falsos positivos.");
     int value = digitalRead(PIR_SENSOR);
     if (value == HIGH)
     {
@@ -537,6 +537,7 @@ void calibrate_pir()
     {
       Serial.println("No Presence");
     }
+    Serial.println("Ingrese 'y' cuando detecte que el sensor se estabilizo y no detecta falsos positivos.");
     if(Serial.available())
     {
       is_ok = Serial.read();
