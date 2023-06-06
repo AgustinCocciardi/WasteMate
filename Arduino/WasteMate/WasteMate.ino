@@ -25,10 +25,9 @@
 #define FLEX_SENSOR A0
 #define ULTRASONIC_SENSOR_TRIGGER 7
 #define ULTRASONIC_SENSOR_ECHO 6
+
 //ACTUADORES
 #define SERVOMOTOR 9
-
-
 
 //CONSTANTES
 #define GENERAL_TIMEOUT_LIMIT 50
@@ -137,6 +136,7 @@ double get_distance(int pin);
 void show_status(t_status status);
 void log_status();
 void log(const char* message);
+void calibrate_pir();
 
 //VARIABLES GLOBALES
 const int colorR = 255;
@@ -145,10 +145,7 @@ const int colorB = 0;
 
 Servo servo;
 rgb_lcd lcd;
-SoftwareSerial btSerial(10,11); // RX | TX
-
-char c = ' ';//TODO: Remove, esto es una prueba.
-
+SoftwareSerial bluetooth_serial(10,11); // RX | TX
 
 t_timer timer_general;
 t_timer timer_presence;
@@ -212,15 +209,17 @@ byte index_verification;
 void setup()
 {
   Serial.begin(9600);
-  btSerial.begin(9600); 
+  bluetooth_serial.begin(9600); 
 
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   lcd.setRGB(colorR, colorG, colorB);
   // Print a message to the LCD.
-  lcd.print("CALIBRANDO..."); //TODO: VARIABLE O CTE.
-  
+  lcd.print("CALIBRANDO...");
+
   delay(1000);
+
+  calibrate_pir();
 
   pinMode(PIR_SENSOR, INPUT);
   pinMode(FLEX_SENSOR, INPUT);
@@ -322,10 +321,10 @@ bool verify_weight()
 bool verify_message()
 {
   byte read = 0;
-  if(btSerial.available())
+  if(bluetooth_serial.available())
   {
     //se los lee y se los muestra en el monitor serie
-    read = btSerial.read();
+    read = bluetooth_serial.read();
     //Serial.write("leyendoAA:");
     Serial.write(read);
     //read = Serial.read();
@@ -456,7 +455,7 @@ double get_distance(int pin)
 	return PULSE_DURATION_TO_DISTANCE_FACTOR * get_echo(pin);
 }
 
-//Obtiene el anchio de pulso del sensor.
+//Obtiene el ancho de pulso del sensor.
 long get_echo(int pin)
 {
   pinMode(pin, OUTPUT);
@@ -501,11 +500,11 @@ void error()
   send_notification(MESSAGE_ERROR);
 }
 
-//Envía una notificación a la aplicación. Simulación temporal de conexión Bluetooth.
+//Envía una notificación a la aplicación.
 void send_notification(const char* message)
 {
   Serial.print("BLUETOOTH: ");
-  btSerial.write(message); 
+  bluetooth_serial.write(message); 
 }
 
 //Log de los estados.
@@ -517,9 +516,31 @@ void log_status()
   debug_println(STATUS_DESCRIPTION[current_state]);
 }
 
-//Log de los estados.
 void log(const char* message)
 {
   debug_print("DEBUG: ");
   debug_println(message);
+}
+
+void calibrate_pir()
+{
+  char is_ok = 'n';
+  do
+  {
+    Serial.println("Se inicia la calibración del sensor PIR. Ingrese 'y' cuando detecte que el sensor se estabilizo y no detecta falsos positivos.");
+    int value = digitalRead(PIR_SENSOR);
+    if (value == HIGH)
+    {
+      Serial.println("Presence");
+    }
+    else
+    {
+      Serial.println("No Presence");
+    }
+    if(Serial.available())
+    {
+      is_ok = Serial.read();
+    }
+    delay(1000);
+  } while (is_ok != 'y');
 }
