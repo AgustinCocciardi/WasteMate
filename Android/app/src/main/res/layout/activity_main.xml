@@ -53,11 +53,11 @@
         app:layout_constraintVertical_bias="0.393" />
 
     <Button
-        android:id="@+id/boton"
-        android:layout_width="153dp"
-        android:layout_height="73dp"
+        android:id="@+id/botonCapacidad"
+        android:layout_width="224dp"
+        android:layout_height="56dp"
         android:layout_marginTop="68dp"
-        android:text="Accion"
+        android:text="Capacidad"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -66,16 +66,16 @@
         app:layout_constraintVertical_bias="0.413" />
 
     <ImageButton
-        android:id="@+id/botonCapacidad"
+        android:id="@+id/botonConfiguracion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="56dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/boton"
+        app:layout_constraintTop_toBottomOf="@+id/botonCapacidad"
         app:layout_constraintVertical_bias="0.16"
-        app:srcCompat="@mipmap/tachito" />
+        app:srcCompat="@mipmap/config50" />
 
     <Button
         android:id="@+id/btnBuscar"

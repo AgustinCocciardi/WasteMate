@@ -22,8 +22,6 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.app.Activity;
-import android.app.ProgressDialog;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -35,8 +33,8 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button boton;
-    private ImageButton botonCapacidad;
+    private Button botonCapacidad;
+    private ImageButton botonConfiguracion;
 
     private TextView txtEstado;
     private Button btnActivar;
@@ -69,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        boton = (Button) findViewById(R.id.boton);
-        botonCapacidad = (ImageButton) findViewById(R.id.botonCapacidad);
+        botonCapacidad = (Button) findViewById(R.id.botonCapacidad);
+        botonConfiguracion = (ImageButton) findViewById(R.id.botonConfiguracion);
 
         txtEstado = (TextView) findViewById(R.id.txtEstado);
         btnActivar = (Button) findViewById(R.id.btnActivar);
@@ -95,17 +93,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Botones que me llevarán a las otras activities
-        boton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, Sensores.class);
-                startActivity(intent);
-            }
-        });
         botonCapacidad.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, Capacidad.class);
+                startActivity(intent);
+            }
+        });
+        botonConfiguracion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, Sensores.class);
                 startActivity(intent);
             }
         });
