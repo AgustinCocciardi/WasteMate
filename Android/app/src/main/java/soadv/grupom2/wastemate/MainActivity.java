@@ -75,6 +75,9 @@ public class MainActivity extends AppCompatActivity {
         btnEmparejar = (Button) findViewById(R.id.btnEmparejar);
         btnBuscar = (Button) findViewById(R.id.btnBuscar);
 
+        btnBuscar.setVisibility(View.GONE);
+        btnEmparejar.setVisibility(View.GONE);
+
         //Se crea un adaptador para podermanejar el bluethoot del celular
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
