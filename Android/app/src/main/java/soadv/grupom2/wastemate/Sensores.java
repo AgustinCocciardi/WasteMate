@@ -39,6 +39,7 @@ import java.util.Set;
 
 public class Sensores extends Activity implements SensorEventListener, CompoundButton.OnCheckedChangeListener {
 
+    private boolean botonAtrasPresionado;
     private TextView txtEstadoBluetooth;
     private final static float cambioPrecision = 30;
     private final static double pesoMaximo = 150;
@@ -304,6 +305,7 @@ public class Sensores extends Activity implements SensorEventListener, CompoundB
         {
             if ((Math.abs(valoresSensor[0]) > cambioPrecision || Math.abs(valoresSensor[1]) > cambioPrecision || Math.abs(valoresSensor[2]) > cambioPrecision))
             {
+                botonAtrasPresionado = true;
                 etiquetaShake.setVisibility(View.GONE);
                 etiquetaCapacidad.setVisibility(View.VISIBLE);
                 etiquetaPeso.setVisibility(View.VISIBLE);
@@ -449,6 +451,27 @@ public class Sensores extends Activity implements SensorEventListener, CompoundB
     {
         sensor.unregisterListener(this);
         Log.i("sensor", "No registrado");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (botonAtrasPresionado)
+        {
+            botonAtrasPresionado = false;
+            etiquetaShake.setVisibility(View.VISIBLE);
+            etiquetaCapacidad.setVisibility(View.GONE);
+            etiquetaPeso.setVisibility(View.GONE);
+            limiteCapacidad.setVisibility(View.GONE);
+            limitePeso.setVisibility(View.GONE);
+            grabarBoton.setVisibility(View.GONE);
+            btnEmparejarDispositivos.setVisibility(View.VISIBLE);
+            btnBuscarDispositivos.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            //ejecuta super.onBackPressed() para que finalice el metodo cerrando el activity
+            super.onBackPressed();
+        }
     }
 
 }
