@@ -25,6 +25,7 @@ public class Capacidad extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_capacidad);
         capacidadText = findViewById(R.id.mostrarCapacidad);
         DecimalFormat formatoDecimal = new DecimalFormat("#.00");
