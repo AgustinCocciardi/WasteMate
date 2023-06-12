@@ -15,16 +15,6 @@
         app:layout_constraintTop_toBottomOf="@+id/txtEstado"
         tools:layout_editor_absoluteX="0dp" />
 
-    <Button
-        android:id="@+id/btnEmparejar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:enabled="false"
-        android:text="Dispositivos Emparejados"
-        app:layout_constraintTop_toBottomOf="@+id/btnActivar"
-        tools:layout_editor_absoluteX="0dp" />
-
     <TextView
         android:id="@+id/txtEstado"
         android:layout_width="match_parent"
@@ -76,17 +66,5 @@
         app:layout_constraintTop_toBottomOf="@+id/botonCapacidad"
         app:layout_constraintVertical_bias="0.16"
         app:srcCompat="@mipmap/config50" />
-
-    <Button
-        android:id="@+id/btnBuscar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:enabled="false"
-        android:text="Buscar Dispositivos"
-        app:layout_constraintBottom_toTopOf="@+id/textView"
-        app:layout_constraintTop_toBottomOf="@+id/btnEmparejar"
-        app:layout_constraintVertical_bias="0.964"
-        tools:layout_editor_absoluteX="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

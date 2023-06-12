@@ -14,8 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-//import android.support.v4.app.ActivityCompat;
-//import android.support.v4.content.ContextCompat;
+
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -41,8 +40,6 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView txtEstado;
     private Button btnActivar;
-    private Button btnEmparejar;
-    private Button btnBuscar;
 
     private ProgressDialog mProgressDlg;
 
@@ -91,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
 
         botonCapacidad = (Button) findViewById(R.id.botonCapacidad);
@@ -99,11 +95,6 @@ public class MainActivity extends AppCompatActivity {
 
         txtEstado = (TextView) findViewById(R.id.txtEstado);
         btnActivar = (Button) findViewById(R.id.btnActivar);
-        btnEmparejar = (Button) findViewById(R.id.btnEmparejar);
-        btnBuscar = (Button) findViewById(R.id.btnBuscar);
-
-        btnBuscar.setVisibility(View.GONE);
-        btnEmparejar.setVisibility(View.GONE);
 
         //Se crea un adaptador para podermanejar el bluethoot del celular
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -180,9 +171,6 @@ public class MainActivity extends AppCompatActivity {
     //Cuando se detruye la Acivity se quita el registro de los brodcast. Apartir de este momento no se
     //recibe mas broadcast del SO. del bluethoot
     public void onDestroy() {
-        unregisterReceiver(bluetoothDiscoveryFinishedReceiver);
-        unregisterReceiver(bluetoothDiscoveryStartedReceiver);
-        unregisterReceiver(bluetoothDeviceFoundReceiver);
         super.onDestroy();
     }
 
@@ -197,10 +185,6 @@ public class MainActivity extends AppCompatActivity {
         else
         {
             //si el celular soporta bluethoot, se definen los listener para los botones de la activity
-            btnEmparejar.setOnClickListener(btnEmparejarListener);
-
-            btnBuscar.setOnClickListener(btnBuscarListener);
-
             btnActivar.setOnClickListener(btnActivarListener);
 
             //se determina si esta activado el bluethoot
@@ -215,23 +199,6 @@ public class MainActivity extends AppCompatActivity {
                 showDisabled();
             }
         }
-
-
-        //se definen un broadcastReceiver que captura el broadcast del SO cuando captura los siguientes eventos:
-        IntentFilter deviceFoundFilter = new IntentFilter();
-        deviceFoundFilter.addAction(BluetoothDevice.ACTION_FOUND); //Se encuentra un dispositivo bluethoot al realizar una busqueda
-        //se define (registra) el handler que captura los broadcast anterirmente mencionados.
-        registerReceiver(bluetoothDeviceFoundReceiver, deviceFoundFilter);
-
-        IntentFilter discoveryStartedFilter = new IntentFilter();
-        discoveryStartedFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED); //Cuando se comienza una busqueda de bluethoot
-        //se define (registra) el handler que captura los broadcast anterirmente mencionados.
-        registerReceiver(bluetoothDiscoveryStartedReceiver, discoveryStartedFilter);
-
-        IntentFilter discoveryFinished = new IntentFilter();
-        discoveryFinished.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED); //cuando la busqueda de bluethoot finaliza
-        //se define (registra) el handler que captura los broadcast anterirmente mencionados.
-        registerReceiver(bluetoothDiscoveryFinishedReceiver, discoveryFinished);
     }
 
     private void showEnabled() {
@@ -240,9 +207,6 @@ public class MainActivity extends AppCompatActivity {
 
         btnActivar.setText("Desactivar");
         btnActivar.setEnabled(true);
-
-        btnEmparejar.setEnabled(true);
-        btnBuscar.setEnabled(true);
     }
 
     private void showDisabled() {
@@ -251,9 +215,6 @@ public class MainActivity extends AppCompatActivity {
 
         btnActivar.setText("Activar");
         btnActivar.setEnabled(true);
-
-        btnEmparejar.setEnabled(false);
-        btnBuscar.setEnabled(false);
     }
 
     private void showUnsupported() {
@@ -261,84 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
         btnActivar.setText("Activar");
         btnActivar.setEnabled(false);
-
-        btnEmparejar.setEnabled(false);
-        btnBuscar.setEnabled(false);
     }
 
     private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-    private  final BroadcastReceiver bluetoothDiscoveryStartedReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //Creo la lista donde voy a mostrar los dispositivos encontrados
-            mDeviceList = new ArrayList<BluetoothDevice>();
-
-            //muestro el cuadro de dialogo de busqueda
-            mProgressDlg.show();
-        }
-    };
-    private  final BroadcastReceiver bluetoothDiscoveryFinishedReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //se cierra el cuadro de dialogo de busqueda
-            mProgressDlg.dismiss();
-
-            //se inicia el activity DeviceListActivity pasandole como parametros, por intent,
-            //el listado de dispositovos encontrados
-            Intent newIntent = new Intent(MainActivity.this, DeviceListActivity.class);
-
-            newIntent.putParcelableArrayListExtra("device.list", mDeviceList);
-
-            startActivity(newIntent);
-        }
-    };
-
-    private  final BroadcastReceiver bluetoothDeviceFoundReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //Se lo agregan sus datos a una lista de dispositivos encontrados
-            BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-
-            mDeviceList.add(device);
-            showToast("Dispositivo Encontrado:" + device.getName());
-        }
-    };
-
-    //Metodo que actua como Listener de los eventos que ocurren en los componentes graficos de la activty
-    private View.OnClickListener btnEmparejarListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-
-            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-            if (pairedDevices == null || pairedDevices.size() == 0)
-            {
-                showToast("No se encontraron dispositivos emparejados");
-            }
-            else
-            {
-                ArrayList<BluetoothDevice> list = new ArrayList<BluetoothDevice>();
-
-                list.addAll(pairedDevices);
-
-                Intent intent = new Intent(MainActivity.this, DeviceListActivity.class);
-
-                intent.putParcelableArrayListExtra("device.list", list);
-
-                startActivity(intent);
-            }
-        }
-    };
-
-    private View.OnClickListener btnBuscarListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            mBluetoothAdapter.startDiscovery();
-        }
-    };
 
     private View.OnClickListener btnActivarListener = new View.OnClickListener() {
         @Override
@@ -352,7 +241,6 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void disableBluetooth() {
-        unregisterReceiver(bluetoothDiscoveryFinishedReceiver);
         Intent intent = new Intent("android.bluetooth.adapter.action.REQUEST_DISABLE");
         disableBluetoothActivityLauncher.launch(intent);
     }
@@ -360,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
     private void enableBluetooth(){
         IntentFilter discoveryFinished = new IntentFilter();
         discoveryFinished.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        registerReceiver(bluetoothDiscoveryFinishedReceiver, discoveryFinished);
         Intent intent = new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE");
         enableBluetoothActivityLauncher.launch(intent);
     }
