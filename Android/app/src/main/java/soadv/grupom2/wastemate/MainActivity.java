@@ -58,6 +58,14 @@ public class MainActivity extends AppCompatActivity {
     ActivityResultLauncher<Intent> enableBluetoothActivityLauncher;
     ActivityResultLauncher<Intent> disableBluetoothActivityLauncher;
 
+    private TextView capacidadText;
+    private double capacidadReal = 0;
+    private double capacidadCritica = 0;
+    private double capacidadMinima = 0;
+    private final static int rojo = Color.RED;
+    private final static int azul = Color.BLUE;
+    private final static int verde = Color.GREEN;
+
     //endregion
 
     //region Constructor
@@ -96,6 +104,9 @@ public class MainActivity extends AppCompatActivity {
         txtEstado = (TextView) findViewById(R.id.txtEstado);
         btnActivar = (Button) findViewById(R.id.btnActivar);
 
+        capacidadText = (TextView) findViewById(R.id.capacidadText);
+        capacidadText.setVisibility(View.GONE);
+
         //Se crea un adaptador para podermanejar el bluethoot del celular
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -117,8 +128,7 @@ public class MainActivity extends AppCompatActivity {
         botonCapacidad.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, Capacidad.class);
-                startActivity(intent);
+                showToast("Voy a mandar un pedido para ver capacidad al arduino");
             }
         });
         botonConfiguracion.setOnClickListener(new View.OnClickListener() {
@@ -207,6 +217,9 @@ public class MainActivity extends AppCompatActivity {
 
         btnActivar.setText("Desactivar");
         btnActivar.setEnabled(true);
+
+        capacidadText.setText("Presione el boton para ver capacidad");
+        capacidadText.setVisibility(View.VISIBLE);
     }
 
     private void showDisabled() {
@@ -215,6 +228,9 @@ public class MainActivity extends AppCompatActivity {
 
         btnActivar.setText("Activar");
         btnActivar.setEnabled(true);
+
+        capacidadText.setText("");
+        capacidadText.setVisibility(View.GONE);
     }
 
     private void showUnsupported() {
