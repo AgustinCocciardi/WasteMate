@@ -2,10 +2,10 @@ package soadv.grupom2.wastemate;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,10 +19,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,21 +33,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import org.w3c.dom.Text;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public class Sensores extends AppCompatActivity implements SensorEventListener, CompoundButton.OnCheckedChangeListener {
 
-    private boolean botonAtrasPresionado;
+    private boolean botonAtrasPresionado = false;
+
+    private boolean puedoMandarValoresLimite;
     private TextView txtEstadoBluetooth;
-    private final static float cambioPrecision = 30;
-    private final static double pesoMaximo = 150;
-    private final static double capacidadMaxima = 50;
+    private static final float ZERO = 0;
+    private static final float CAMBIO_PRECISION = 30;
+    private static final double PESO_MAXIMO = 500;
+    private static final double CAPACIDAD = 50;
+
+    private static final double CAPACIDAD_MINIMA = 3;
     private TextView limitePeso;
     private TextView limiteCapacidad;
+
+    private TextView limiteCapacidadMinima;
+
+    private TextView etiquetaCapacidadMinima;
     private TextView etiquetaPeso;
     private TextView etiquetaCapacidad;
     private TextView etiquetaShake;
@@ -60,7 +71,20 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
 
     private ArrayList<BluetoothDevice> mDeviceList = new ArrayList<BluetoothDevice>();
 
+    Handler bluetoothIn;
+    final int handlerState = 0; //used to identify handler message
     private BluetoothAdapter mBluetoothAdapter;
+
+    private BluetoothAdapter btAdapter = null;
+
+    private BluetoothSocket btSocket = null;
+    private ConnectedThread mConnectedThread;
+
+    // SPP UUID service  - Funciona en la mayoria de los dispositivos
+    private static final UUID BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+    // String for MAC address del Hc05
+    private static String address = null;
 
     public static final int MULTIPLE_PERMISSIONS = 10;
 
@@ -101,18 +125,23 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         sensor = (SensorManager) getSystemService(SENSOR_SERVICE);
         etiquetaPeso = findViewById(R.id.etiquetaPeso);
         etiquetaCapacidad = findViewById(R.id.etiquetaCapacidad);
+        etiquetaCapacidadMinima = findViewById(R.id.etiquetaCapacidadMinima);
         etiquetaShake = findViewById(R.id.etiquetaShake);
         limitePeso = findViewById(R.id.limitePeso);
-        limitePeso.setText(Double.toString(pesoMaximo));
+        limitePeso.setText(Double.toString(PESO_MAXIMO));
         limiteCapacidad = findViewById(R.id.limiteCapacidad);
-        limiteCapacidad.setText(Double.toString(capacidadMaxima));
+        limiteCapacidad.setText(Double.toString(CAPACIDAD));
+        limiteCapacidadMinima = findViewById(R.id.limiteCapacidadMinima);
+        limiteCapacidadMinima.setText(Double.toString(CAPACIDAD_MINIMA));
         grabarBoton = (Button) findViewById(R.id.botonGrabar);
         btnEmparejarDispositivos.setVisibility(View.VISIBLE);
         btnBuscarDispositivos.setVisibility(View.VISIBLE);
         etiquetaShake.setVisibility(View.VISIBLE);
         etiquetaCapacidad.setVisibility(View.GONE);
+        etiquetaCapacidadMinima.setVisibility(View.GONE);
         etiquetaPeso.setVisibility(View.GONE);
         limiteCapacidad.setVisibility(View.GONE);
+        limiteCapacidadMinima.setVisibility(View.GONE);
         limitePeso.setVisibility(View.GONE);
         grabarBoton.setVisibility(View.GONE);
 
@@ -134,15 +163,39 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         grabarBoton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(Double.parseDouble(String.valueOf(limitePeso.getText())) > pesoMaximo || Double.parseDouble(String.valueOf(limiteCapacidad.getText())) > capacidadMaxima)
+                //Voy a ver si los valores limite cumplen la condicion para enviarse. Si no, muestro mensajes
+                puedoMandarValoresLimite = true;
+                if(Double.parseDouble(String.valueOf(limitePeso.getText())) > PESO_MAXIMO || Double.parseDouble(String.valueOf(limitePeso.getText())) <= ZERO)
                 {
-                    Toast.makeText(getApplicationContext(),"Excedio los valores de capacidad o peso. \nPeso maximo: 150. Capacidad maxima: 50", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(),"El peso no puede ser mayor a 500, ni menor o igual a 0", Toast.LENGTH_LONG).show();
+                    puedoMandarValoresLimite = false;
                 }
-                else
+                if (Double.parseDouble(String.valueOf(limiteCapacidad.getText())) <= Double.parseDouble(String.valueOf(limiteCapacidadMinima.getText())))
                 {
-                    //Pasar con Bluetooth
+                    Toast.makeText(getApplicationContext(),"La capacidad critica no puede ser menor o igual a la minima", Toast.LENGTH_LONG).show();
+                    puedoMandarValoresLimite = false;
+                }
+                if (Double.parseDouble(String.valueOf(limiteCapacidadMinima.getText())) < CAPACIDAD_MINIMA)
+                {
+                    Toast.makeText(getApplicationContext(),"La capacidad minima no puede ser menor a 3", Toast.LENGTH_LONG).show();
+                    puedoMandarValoresLimite = false;
+                }
+                if(puedoMandarValoresLimite)
+                {
+                    //Pasé todas las validaciones. Voy a mandar los valores al Arduino
                     Log.i("Ejecutando", String.valueOf(limitePeso.getText()));
                     Log.i("Ejecutando", String.valueOf(limiteCapacidad.getText()));
+                    Log.i("Ejecutando", String.valueOf(limiteCapacidadMinima.getText()));
+                    StringBuilder valoresLimiteParaArduino = new StringBuilder();
+                    valoresLimiteParaArduino.append("A");
+                    valoresLimiteParaArduino.append("|");
+                    valoresLimiteParaArduino.append(limitePeso.getText());
+                    valoresLimiteParaArduino.append("|");
+                    valoresLimiteParaArduino.append(limiteCapacidad.getText());
+                    valoresLimiteParaArduino.append("|");
+                    valoresLimiteParaArduino.append(limiteCapacidadMinima.getText());
+                    String valoresParaArduino = valoresLimiteParaArduino.toString();
+                    mConnectedThread.write(valoresParaArduino);
                 }
             }
         });
@@ -162,10 +215,60 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         showDisabled();
     }
     @Override
+    //Cada vez que se detecta el evento OnResume se establece la comunicacion con el HC05, creando un
+    //socketBluethoot
     protected void onResume()
     {
         super.onResume();
         registerSenser();
+
+        //Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
+        Intent intent=getIntent();
+        Bundle extras=intent.getExtras();
+
+        //Si todavia no me emparejé con ningun dispositivo, esto va a pinchar por todos lados
+        //debo verificar que me haya emparejado con el Arduino
+        if(extras != null)
+        {
+            address= extras.getString("Direccion_Bluethoot");
+
+            BluetoothDevice device = btAdapter.getRemoteDevice(address);
+
+            //se realiza la conexion del Bluethoot crea y se conectandose a atraves de un socket
+            try
+            {
+                btSocket = createBluetoothSocket(device);
+            }
+            catch (IOException e)
+            {
+                showToast( "La creacción del Socket fallo");
+            }
+            // Establish the Bluetooth socket connection.
+            try
+            {
+                btSocket.connect();
+            }
+            catch (IOException e)
+            {
+                try
+                {
+                    btSocket.close();
+                }
+                catch (IOException e2)
+                {
+                    //insert code to deal with this
+                }
+            }
+
+            //Una establecida la conexion con el Hc05 se crea el hilo secundario, el cual va a recibir
+            // los datos de Arduino atraves del bluethoot
+            mConnectedThread = new ConnectedThread(btSocket);
+            mConnectedThread.start();
+
+            //Voy a habilitar el boton para grabar solo cuando ya tenga mi conexion con arduino creada
+            grabarBoton.setEnabled(true);
+            grabarBoton.setBackgroundColor(Color.BLUE);
+        }
     }
 
     @Override
@@ -193,6 +296,12 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         unregisterReceiver(bluetoothDiscoveryStartedReceiver);
         unregisterReceiver(bluetoothDeviceFoundReceiver);
         super.onDestroy();
+    }
+
+    //Metodo que crea el socket bluethoot
+    private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
+
+        return  device.createRfcommSocketToServiceRecord(BTMODULEUUID);
     }
 
     protected  void enableComponent()
@@ -249,8 +358,6 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         btnEmparejarDispositivos.setBackgroundColor(Color.BLUE);
         btnBuscarDispositivos.setTextColor(Color.WHITE);
         btnEmparejarDispositivos.setTextColor(Color.WHITE);
-        grabarBoton.setEnabled(true);
-        grabarBoton.setBackgroundColor(Color.BLUE);
         grabarBoton.setTextColor(Color.WHITE);
     }
 
@@ -322,15 +429,25 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         float valoresSensor[] = sensorEvent.values;
         if (tipoSensor == Sensor.TYPE_ACCELEROMETER)
         {
-            if ((Math.abs(valoresSensor[0]) > cambioPrecision || Math.abs(valoresSensor[1]) > cambioPrecision || Math.abs(valoresSensor[2]) > cambioPrecision))
+            if ((Math.abs(valoresSensor[0]) > CAMBIO_PRECISION || Math.abs(valoresSensor[1]) > CAMBIO_PRECISION || Math.abs(valoresSensor[2]) > CAMBIO_PRECISION))
             {
                 botonAtrasPresionado = true;
                 etiquetaShake.setVisibility(View.GONE);
                 etiquetaCapacidad.setVisibility(View.VISIBLE);
+                etiquetaCapacidadMinima.setVisibility(View.VISIBLE);
                 etiquetaPeso.setVisibility(View.VISIBLE);
                 limiteCapacidad.setVisibility(View.VISIBLE);
+                limiteCapacidadMinima.setVisibility(View.VISIBLE);
                 limitePeso.setVisibility(View.VISIBLE);
                 grabarBoton.setVisibility(View.VISIBLE);
+                if (address != null)
+                {
+                    grabarBoton.setEnabled(true);
+                }
+                else
+                {
+                    grabarBoton.setEnabled(false);
+                }
                 btnEmparejarDispositivos.setVisibility(View.GONE);
                 btnBuscarDispositivos.setVisibility(View.GONE);
             }
@@ -487,8 +604,10 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
             botonAtrasPresionado = false;
             etiquetaShake.setVisibility(View.VISIBLE);
             etiquetaCapacidad.setVisibility(View.GONE);
+            etiquetaCapacidadMinima.setVisibility(View.GONE);
             etiquetaPeso.setVisibility(View.GONE);
             limiteCapacidad.setVisibility(View.GONE);
+            limiteCapacidadMinima.setVisibility(View.GONE);
             limitePeso.setVisibility(View.GONE);
             grabarBoton.setVisibility(View.GONE);
             btnEmparejarDispositivos.setVisibility(View.VISIBLE);
@@ -501,4 +620,62 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         }
     }
 
+    private class ConnectedThread extends Thread
+    {
+        private final OutputStream mmOutStream;
+
+        //Constructor de la clase del hilo secundario
+        public ConnectedThread(BluetoothSocket socket)
+        {
+            OutputStream tmpOut = null;
+
+            try
+            {
+                //Create I/O streams for connection
+                tmpOut = socket.getOutputStream();
+            } catch (IOException e) { }
+
+            mmOutStream = tmpOut;
+        }
+
+        //metodo run del hilo, que va a entrar en una espera activa para recibir los msjs del HC05
+        public void run()
+        {
+            //El hilo secundario no debe recibir información de Arduino en esta activity
+
+            /*byte[] buffer = new byte[256];
+            int bytes;
+
+            //el hilo secundario se queda esperando mensajes del HC05
+            while (true)
+            {
+                try
+                {
+                    //se leen los datos del Bluethoot
+                    bytes = mmInStream.read(buffer);
+                    String readMessage = new String(buffer, 0, bytes);
+
+                    //se muestran en el layout de la activity, utilizando el handler del hilo
+                    // principal antes mencionado
+                    bluetoothIn.obtainMessage(handlerState, bytes, -1, readMessage).sendToTarget();
+                } catch (IOException e) {
+                    break;
+                }
+            }
+            */
+        }
+
+
+        //write method
+        public void write(String input) {
+            byte[] msgBuffer = input.getBytes();           //converts entered String into bytes
+            try {
+                mmOutStream.write(msgBuffer);                //write bytes over BT connection via outstream
+            } catch (IOException e) {
+                //if you cannot write, close the application
+                showToast("La conexion fallo");
+                finish();
+            }
+        }
+    }
 }

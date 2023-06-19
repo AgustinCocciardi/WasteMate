@@ -7,6 +7,20 @@
     tools:context=".Sensores">
 
     <TextView
+        android:id="@+id/etiquetaCapacidadMinima"
+        android:layout_width="178dp"
+        android:layout_height="54dp"
+        android:layout_marginTop="24dp"
+        android:autoText="false"
+        android:text="Limite Capacidad Minima"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.068"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etiquetaCapacidad" />
+
+    <TextView
         android:id="@+id/txtEstadoBluetooth"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -44,16 +58,17 @@
         android:id="@+id/etiquetaCapacidad"
         android:layout_width="178dp"
         android:layout_height="54dp"
+        android:layout_marginBottom="316dp"
         android:autoText="false"
-        android:text="Limite Capacidad"
+        android:text="Limite Capacidad Critica"
         android:textAlignment="center"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.064"
+        app:layout_constraintHorizontal_bias="0.068"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etiquetaPeso"
-        app:layout_constraintVertical_bias="0.204" />
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/textView2"
@@ -74,7 +89,7 @@
         android:id="@+id/etiquetaPeso"
         android:layout_width="162dp"
         android:layout_height="49dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginBottom="376dp"
         android:autoText="false"
         android:text="Limite Peso"
         android:textAlignment="center"
@@ -83,50 +98,44 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.064"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2"
-        app:layout_constraintVertical_bias="0.033" />
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
     <EditText
         android:id="@+id/limitePeso"
         android:layout_width="137dp"
         android:layout_height="49dp"
-        android:layout_marginTop="72dp"
-        android:layout_marginEnd="44dp"
+        android:layout_marginEnd="52dp"
         android:ems="10"
         android:inputType="numberDecimal"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView2"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.03" />
 
     <EditText
         android:id="@+id/limiteCapacidad"
         android:layout_width="146dp"
         android:layout_height="47dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginTop="24dp"
         android:ems="10"
         android:inputType="numberDecimal"
         android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.83"
+        app:layout_constraintHorizontal_bias="0.837"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/limitePeso"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/limitePeso" />
 
     <Button
         android:id="@+id/botonGrabar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginBottom="104dp"
         android:text="Grabar"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/limiteCapacidad"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/etiquetaShake"
@@ -140,5 +149,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView2"
-        app:layout_constraintVertical_bias="0.844" />
+        app:layout_constraintVertical_bias="0.934" />
+
+    <EditText
+        android:id="@+id/limiteCapacidadMinima"
+        android:layout_width="146dp"
+        android:layout_height="47dp"
+        android:layout_marginTop="32dp"
+        android:ems="10"
+        android:inputType="numberDecimal"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.837"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/limiteCapacidad" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
