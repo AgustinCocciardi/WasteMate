@@ -1,89 +1,110 @@
 package soadv.grupom2.wastemate;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class DeviceListAdapter extends BaseAdapter {
-    private LayoutInflater mInflater;
-    private List<BluetoothDevice> mData;
-    private OnPairButtonClickListener mListener;
+public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.ViewHolder> {
+    private List<BluetoothDevice> dataList;
+    private OnClickListener onClickListener2;
+    private boolean show;
+//    OnPairButtonClickListener mListener;
 
-    public DeviceListAdapter(Context context) {
-        mInflater = LayoutInflater.from(context);
+    public DeviceListAdapter() {
+        //this.dataList = dataList;
     }
 
-    public void setData(List<BluetoothDevice> data) {
-        mData = data;
+    public DeviceListAdapter(boolean b) {
+        show = b;
     }
 
-    public void setListener(OnPairButtonClickListener listener) {
-        mListener = listener;
+    public void setData(ArrayList<BluetoothDevice> availableDevices) {
+        dataList = availableDevices;
     }
 
-    public int getCount() {
-        return (mData == null) ? 0 : mData.size();
+    public void setConnected(BluetoothDevice device) {
+
     }
 
-    public Object getItem(int position) {
-        return mData.get(position);
-    }
+//    public void setListener(OnPairButtonClickListener listenerBotonEmparejar) {
+//        mListener = listenerBotonEmparejar;
+//    }
 
-    public long getItemId(int position) {
-        return position;
-    }
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView textView;
+        Button btn;
 
-    public View getView(final int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
+        View vw;
+        public ViewHolder(View itemView, boolean show) {
+            super(itemView);
+            textView = itemView.findViewById(R.id.tv_name);
+            btn = itemView.findViewById(R.id.button_desc);
+            vw = itemView.findViewById(R.id.view_connected_indicator);
 
-        if (convertView == null) {
-            convertView			=  mInflater.inflate(R.layout.list_item_device, null);
+            if(!show)
+                btn.setVisibility(View.GONE);
 
-            holder 				= new ViewHolder();
-
-            holder.nameTv		= (TextView) convertView.findViewById(R.id.tv_name);
-            holder.addressTv 	= (TextView) convertView.findViewById(R.id.tv_address);
-            holder.pairBtn		= (Button) convertView.findViewById(R.id.btn_pair);
-
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
         }
+    }
 
-        BluetoothDevice device	= mData.get(position);
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.list_item_device, parent, false);
+        return new ViewHolder(itemView, show);
+    }
 
-        holder.nameTv.setText(device.getName());
-        holder.addressTv.setText(device.getAddress());
-        holder.pairBtn.setText((device.getBondState() == BluetoothDevice.BOND_BONDED) ? "Unpair" : "Pair");
-        holder.pairBtn.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position)
+    {
+        BluetoothDevice item = dataList.get(position);
+        String itemText = item.getName();
+        holder.textView.setText(itemText);
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                if (mListener != null) {
-                    mListener.onPairButtonClick(position);
+            public void onClick(View view) {
+                if (onClickListener != null) {
+                    onClickListener.onClick(position, item);
                 }
             }
         });
-
-        return convertView;
+        holder.btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(onClickListener2 != null){
+                    onClickListener2.onClick(position, item);
+                }
+            }
+        });
     }
 
-    static class ViewHolder {
-        TextView nameTv;
-        TextView addressTv;
-        TextView pairBtn;
+    @Override
+    public int getItemCount() {
+        return dataList.size();
+    }
+    private OnClickListener onClickListener;
+
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
+    }
+    public void setOnClickListener2(OnClickListener onClickListener) {
+        this.onClickListener2 = onClickListener;
     }
 
-    public interface OnPairButtonClickListener {
-        public abstract void onPairButtonClick(int position);
+    public interface OnClickListener {
+        void onClick(int position, BluetoothDevice model);
     }
 }

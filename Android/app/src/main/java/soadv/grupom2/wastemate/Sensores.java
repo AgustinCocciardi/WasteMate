@@ -231,7 +231,14 @@ public class Sensores extends AppCompatActivity implements SensorEventListener, 
         if(extras != null)
         {
             address= extras.getString("Direccion_Bluethoot");
-
+            if (btSocket != null) {
+                try {
+                    btSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             BluetoothDevice device = btAdapter.getRemoteDevice(address);
 
             //se realiza la conexion del Bluethoot crea y se conectandose a atraves de un socket

@@ -7,16 +7,19 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -40,7 +43,22 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     //region Attributes
+    private BluetoothService myService;
+    private boolean isBound = false;
 
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            BluetoothService.LocalBinder localBinder = (BluetoothService.LocalBinder) binder;
+            myService = localBinder.getService();
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            isBound = false;
+        }
+    };
     private Button botonCapacidad;
     private ImageButton botonConfiguracion;
 
@@ -51,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<BluetoothDevice> mDeviceList = new ArrayList<BluetoothDevice>();
 
-    private BluetoothAdapter mBluetoothAdapter;
+//    private BluetoothAdapter mBluetoothAdapter;
     private BluetoothSocket btSocket = null;
     private StringBuilder recDataString = new StringBuilder();
 
@@ -132,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         botonCapacidad.setEnabled(false);
 
         //Se crea un adaptador para podermanejar el bluethoot del celular
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        //mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         //Se Crea la ventana de dialogo que indica que se esta buscando dispositivos bluethoot
         mProgressDlg = new ProgressDialog(this);
@@ -169,14 +187,14 @@ public class MainActivity extends AppCompatActivity {
                 //Cuando esté emparejado con el arduino, le pasaré la dirección del bluetooth a esta activity
                 if(address != null)
                 {
-                    Intent intent = new Intent(MainActivity.this, Sensores.class);
-                    intent.putExtra("Direccion_Bluethoot", address);
+                    Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                    //intent.putExtra("Direccion_Bluethoot", address);
                     startActivity(intent);
                 }
                 else
                 {
                     //Si no estoy emparejado con el arduino, no debo enviar la direccion
-                    Intent intent = new Intent(MainActivity.this, Sensores.class);
+                    Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
                     startActivity(intent);
                 }
             }
@@ -198,79 +216,82 @@ public class MainActivity extends AppCompatActivity {
     {
         Log.i("Ejecuto","Ejecuto OnResume");
         super.onResume();
-
-        //Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
-        Intent intent=getIntent();
-        Bundle extras=intent.getExtras();
-
-        //Si todavia no me emparejé con ningun dispositivo, esto va a pinchar por todos lados
-        //debo verificar que me haya emparejado con el Arduino
-        if(extras != null)
-        {
-            address= extras.getString("Direccion_Bluethoot");
-
-            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-
-            //se realiza la conexion del Bluethoot crea y se conectandose a atraves de un socket
-            try
-            {
-                btSocket = createBluetoothSocket(device);
-            }
-            catch (IOException e)
-            {
-                showToast( "La creacción del Socket fallo");
-            }
-            // Establish the Bluetooth socket connection.
-            try
-            {
-                btSocket.connect();
-            }
-            catch (IOException e)
-            {
-                try
-                {
-                    btSocket.close();
-                }
-                catch (IOException e2)
-                {
-                    //insert code to deal with this
-                }
-            }
-
-            //Una vez establecida la conexion con el Hc05 se crea el hilo secundario, el cual va a recibir
-            // los datos de Arduino atraves del bluethoot
-            mConnectedThread = new ConnectedThread(btSocket);
-            mConnectedThread.start();
-
-            //Voy a volver visible el text view para ver la capacidad tan pronto la conexión con Arduino esté establecida
-            capacidadText.setText("Presione el boton para ver capacidad");
-            capacidadText.setVisibility(View.VISIBLE);
-
-            //Voy a habilitar el boton de capacidad tan pronto como esté lista la conexion con el Arduino
-            //El botón capacidad envía un comando write por bluetooth, no debe mandar nada a conexiones no establecidas
-            botonCapacidad.setEnabled(true);
-        }
+        BluetoothManager.bindService(this);
+//
+//        //Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
+//        Intent intent=getIntent();
+//        Bundle extras=intent.getExtras();
+//
+//        //Si todavia no me emparejé con ningun dispositivo, esto va a pinchar por todos lados
+//        //debo verificar que me haya emparejado con el Arduino
+//        if(extras != null)
+//        {
+//            address= extras.getString("Direccion_Bluethoot");
+//
+//            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+//
+//            //se realiza la conexion del Bluethoot crea y se conectandose a atraves de un socket
+//            try
+//            {
+//                btSocket = createBluetoothSocket(device);
+//            }
+//            catch (IOException e)
+//            {
+//                showToast( "La creacción del Socket fallo");
+//            }
+//            // Establish the Bluetooth socket connection.
+//            try
+//            {
+//                btSocket.connect();
+//            }
+//            catch (IOException e)
+//            {
+//                try
+//                {
+//                    btSocket.close();
+//                }
+//                catch (IOException e2)
+//                {
+//                    //insert code to deal with this
+//                }
+//            }
+//
+//            //Una vez establecida la conexion con el Hc05 se crea el hilo secundario, el cual va a recibir
+//            // los datos de Arduino atraves del bluethoot
+//            mConnectedThread = new ConnectedThread(btSocket);
+//            mConnectedThread.start();
+//
+//            //Voy a volver visible el text view para ver la capacidad tan pronto la conexión con Arduino esté establecida
+//            capacidadText.setText("Presione el boton para ver capacidad");
+//            capacidadText.setVisibility(View.VISIBLE);
+//
+//            //Voy a habilitar el boton de capacidad tan pronto como esté lista la conexion con el Arduino
+//            //El botón capacidad envía un comando write por bluetooth, no debe mandar nada a conexiones no establecidas
+//            botonCapacidad.setEnabled(true);
+//        }
     }
 
     @Override
     //Cuando se ejecuta el evento onPause se cierra el socket Bluethoot, para no estar recibiendo datos
     protected void onPause() {
-        if (mBluetoothAdapter != null) {
-            if (mBluetoothAdapter.isDiscovering()) {
-                mBluetoothAdapter.cancelDiscovery();
-            }
-        }
+//        if (mBluetoothAdapter != null) {
+//            if (mBluetoothAdapter.isDiscovering()) {
+//                mBluetoothAdapter.cancelDiscovery();
+//            }
+//        }
         super.onPause();
-        if (btSocket != null)
-        {
-            try
-            {
-                //Don't leave Bluetooth sockets open when leaving activity
-                btSocket.close();
-            } catch (IOException e2) {
-                //insert code to deal with this
-            }
-        }
+        BluetoothManager.unbindService(this);
+
+//        if (btSocket != null)
+//        {
+//            try
+//            {
+//                //Don't leave Bluetooth sockets open when leaving activity
+//                btSocket.close();
+//            } catch (IOException e2) {
+//                //insert code to deal with this
+//            }
+//        }
     }
 
     @Override
@@ -290,33 +311,36 @@ public class MainActivity extends AppCompatActivity {
     //recibe mas broadcast del SO. del bluethoot
     public void onDestroy() {
         super.onDestroy();
+        stopService(new Intent(this, BluetoothService.class));
+
     }
 
     protected  void enableComponent()
     {
-        //se determina si existe bluethoot en el celular
-        if (mBluetoothAdapter == null)
-        {
-            //si el celular no soporta bluethoot
-            showUnsupported();
-        }
-        else
-        {
-            //si el celular soporta bluethoot, se definen los listener para los botones de la activity
-            btnActivar.setOnClickListener(btnActivarListener);
 
-            //se determina si esta activado el bluethoot
-            if (mBluetoothAdapter.isEnabled())
-            {
-                //se informa si esta habilitado
-                showEnabled();
-            }
-            else
-            {
-                //se informa si esta deshabilitado
-                showDisabled();
-            }
-        }
+        //se determina si existe bluethoot en el celular
+//        if (mBluetoothAdapter == null)
+//        {
+//            //si el celular no soporta bluethoot
+//            showUnsupported();
+//        }
+//        else
+//        {
+//            //si el celular soporta bluethoot, se definen los listener para los botones de la activity
+//            btnActivar.setOnClickListener(btnActivarListener);
+//
+//            //se determina si esta activado el bluethoot
+//            if (mBluetoothAdapter.isEnabled())
+//            {
+//                //se informa si esta habilitado
+//                showEnabled();
+//            }
+//            else
+//            {
+//                //se informa si esta deshabilitado
+//                showDisabled();
+//            }
+//        }
     }
 
     private void showEnabled() {
@@ -355,11 +379,11 @@ public class MainActivity extends AppCompatActivity {
     private View.OnClickListener btnActivarListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mBluetoothAdapter.isEnabled()) {
-                disableBluetooth();
-            } else {
-                enableBluetooth();
-            }
+//            if (mBluetoothAdapter.isEnabled()) {
+//                disableBluetooth();
+//            } else {
+//                enableBluetooth();
+//            }
         }
     };
 
@@ -387,7 +411,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(DialogInterface dialog, int which) {
             dialog.dismiss();
-            mBluetoothAdapter.cancelDiscovery();
+//            mBluetoothAdapter.cancelDiscovery();
         }
     };
 

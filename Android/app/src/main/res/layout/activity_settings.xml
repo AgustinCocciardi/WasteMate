@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <androidx.core.widget.NestedScrollView
+    android:layout_width="413dp"
+        android:layout_height="716dp"
+        android:layout_marginTop="19dp"
+        android:fadingEdge="vertical"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/switch1"
+        tools:context=".DeviceListActivity">
+    <LinearLayout android:layout_height="match_parent" android:layout_width="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textView9"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Dispositivos Vinculados" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/table_paired"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="27dp" />
+
+        <TextView
+            android:id="@+id/textView10"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="Dispositivos Disponibles" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/table_available"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="32dp" />
+
+    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/bluetoothTextView"
+        android:layout_width="159dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="29dp"
+        android:layout_marginTop="48dp"
+        android:text="Bluetooth"
+
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <soadv.grupom2.wastemate.BluetoothSwitchCompat
+        android:id="@+id/switch1"
+        android:layout_width="72dp"
+        android:layout_height="57dp"
+        android:layout_marginEnd="32dp"
+        android:text="Off"
+        android:theme="@style/Switch.control"
+        app:layout_constraintBottom_toBottomOf="@+id/bluetoothTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/bluetoothTextView"
+        app:switchTextOff="Off"
+        app:switchTextOn="On" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
