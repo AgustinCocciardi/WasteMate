@@ -189,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
                 if(address != null)
                 {
                     Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     //intent.putExtra("Direccion_Bluethoot", address);
                     startActivity(intent);
                 }
@@ -196,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     //Si no estoy emparejado con el arduino, no debo enviar la direccion
                     Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
                 }
             }
@@ -207,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
         disableBluetoothActivityLauncher= registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 (result) -> disableBluetoothCallback());
+        BluetoothManager.bindService(this);
 
     }
 
@@ -217,7 +220,6 @@ public class MainActivity extends AppCompatActivity {
     {
         Log.i("Ejecuto","Ejecuto OnResume");
         super.onResume();
-        BluetoothManager.bindService(this);
 
 //
 //        //Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
@@ -282,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }
         super.onPause();
-        BluetoothManager.unbindService(this);
 
 //        if (btSocket != null)
 //        {
@@ -311,10 +312,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     //Cuando se detruye la Acivity se quita el registro de los brodcast. Apartir de este momento no se
     //recibe mas broadcast del SO. del bluethoot
-    public void onDestroy() {
+    public void onDestroy()
+    {
+        BluetoothManager.stopService(this);
         super.onDestroy();
-        stopService(new Intent(this, BluetoothService.class));
-
     }
 
     protected  void enableComponent()

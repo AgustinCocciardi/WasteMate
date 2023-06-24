@@ -129,6 +129,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        BluetoothManager.bindService(this);
 
         availableDevices = new ArrayList<>();
         setContentView(R.layout.activity_settings);
@@ -235,7 +236,6 @@ public class SettingsActivity extends AppCompatActivity {
     //socketBluethoot
     protected void onResume() {
         super.onResume();
-        BluetoothManager.bindService(this);
 
     }
 
@@ -247,7 +247,6 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        BluetoothManager.unbindService(this);
     }
 
     @Override
@@ -258,6 +257,7 @@ public class SettingsActivity extends AppCompatActivity {
         unregisterReceiver(bluetoothDiscoveryStartedReceiver);
         unregisterReceiver(bluetoothDeviceFoundReceiver);
         unregisterReceiver(bluetoothDeviceBondStateChangedReceiver);
+        BluetoothManager.unbindService(this);
         super.onDestroy();
     }
 

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.util.Log;
 
 public class BluetoothManager {
 
@@ -12,17 +13,17 @@ public class BluetoothManager {
     private static boolean isServiceBound;
 
     private static ServiceConnection serviceConnection = new ServiceConnection() {
+
         @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) iBinder;
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
             bluetoothService = binder.getService();
             isServiceBound = true;
-            // The service is now bound, and you can interact with it
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            bluetoothService = null;
+        public void onServiceDisconnected(ComponentName arg0) {
             isServiceBound = false;
         }
     };
@@ -37,6 +38,11 @@ public class BluetoothManager {
             context.unbindService(serviceConnection);
             isServiceBound = false;
         }
+    }
+
+    public static void stopService(Context context){
+        bluetoothService.disconnect();
+        context.unbindService(serviceConnection);
     }
 
     public static BluetoothService getService() {
