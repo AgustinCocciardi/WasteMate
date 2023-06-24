@@ -18,9 +18,7 @@ public class BluetoothService extends Service {
 
     private BluetoothAdapter bluetoothAdapter;
     private ConnectThread connectThread;
-
     private final IBinder binder = new LocalBinder();
-
 
     @Override
     public void onCreate() {
@@ -30,7 +28,6 @@ public class BluetoothService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Handle any initialization or setup here
         return START_STICKY;
     }
 
@@ -49,20 +46,17 @@ public class BluetoothService extends Service {
         }
     }
 
-    // Example method for connecting to a Bluetooth device
     public void connectToDevice(BluetoothDevice device) {
         connectThread = new ConnectThread(device);
         connectThread.start();
     }
 
-    // Example method for sending data to the connected Bluetooth device
     public void sendData(String data) {
         if (connectThread != null) {
             connectThread.write(data);
         }
     }
 
-    // Example method for disconnecting from the Bluetooth device
     public void disconnect() {
         if (connectThread != null) {
             connectThread.cancel();
@@ -73,8 +67,15 @@ public class BluetoothService extends Service {
     private class ConnectThread extends Thread {
         private BluetoothSocket socket;
         private final BluetoothDevice device;
-        public void write(String data) {
-
+        private  InputStream mmInStream;
+        private  OutputStream mmOutStream;
+        public void write(String input) {
+            byte[] msgBuffer = input.getBytes();           //converts entered String into bytes
+            try {
+                mmOutStream.write(msgBuffer);                //write bytes over BT connection via outstream
+            } catch (IOException e) {
+                //if you cannot write, close the application
+            }
         }
 
         public void cancel() {
@@ -92,6 +93,7 @@ public class BluetoothService extends Service {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             socket = tmp;
         }
 
@@ -100,29 +102,6 @@ public class BluetoothService extends Service {
             try {
                 //socket = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
                 socket.connect();
-                ConnectedThread mConnectedThread = new ConnectedThread(socket);
-                mConnectedThread.start();
-                mConnectedThread.write("{\"c\":0,\"d\":{\"mw\":999,\"md\":99,\"cd\":888}}");
-                // Handle the connected socket here
-            } catch (IOException connectException) {
-                connectException.printStackTrace();
-                try {
-                    socket.close();
-                } catch (IOException closeException) {
-                    closeException.printStackTrace();
-                }
-            }
-        }
-
-
-        private class ConnectedThread extends Thread
-        {
-            private final InputStream mmInStream;
-            private final OutputStream mmOutStream;
-
-            //Constructor de la clase del hilo secundario
-            public ConnectedThread(BluetoothSocket socket)
-            {
                 InputStream tmpIn = null;
                 OutputStream tmpOut = null;
 
@@ -131,15 +110,14 @@ public class BluetoothService extends Service {
                     //Create I/O streams for connection
                     tmpIn = socket.getInputStream();
                     tmpOut = socket.getOutputStream();
-                } catch (IOException e) { }
+                } catch (IOException e) {
+                    e.printStackTrace();
+
+                }
 
                 mmInStream = tmpIn;
                 mmOutStream = tmpOut;
-            }
 
-            //metodo run del hilo, que va a entrar en una espera activa para recibir los msjs del HC05
-            public void run()
-            {
                 byte[] buffer = new byte[256];
                 int bytes;
 
@@ -149,9 +127,10 @@ public class BluetoothService extends Service {
                     try
                     {
                         //se leen los datos del Bluethoot
-                        bytes = mmInStream.read(buffer);
-                        String readMessage = new String(buffer, 0, bytes);
-
+                        if(mmInStream.available()>0) {
+                            bytes = mmInStream.read(buffer);
+                            String readMessage = new String(buffer, 0, bytes);
+                        }
                         //se muestran en el layout de la activity, utilizando el handler del hilo
                         // principal antes mencionado
                         //bluetoothIn.obtainMessage(handlerState, bytes, -1, readMessage).sendToTarget();
@@ -159,16 +138,15 @@ public class BluetoothService extends Service {
                         break;
                     }
                 }
-            }
 
-
-            //write method
-            public void write(String input) {
-                byte[] msgBuffer = input.getBytes();           //converts entered String into bytes
+                //mConnectedThread.write("{\"c\":0,\"d\":{\"mw\":999,\"md\":99,\"cd\":888}}");
+                // Handle the connected socket here
+            } catch (IOException connectException) {
+                connectException.printStackTrace();
                 try {
-                    mmOutStream.write(msgBuffer);                //write bytes over BT connection via outstream
-                } catch (IOException e) {
-                    //if you cannot write, close the application
+                    socket.close();
+                } catch (IOException closeException) {
+                    closeException.printStackTrace();
                 }
             }
         }

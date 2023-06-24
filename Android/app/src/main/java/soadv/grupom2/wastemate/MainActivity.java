@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         capacidadText = (TextView) findViewById(R.id.capacidadText);
         capacidadText.setVisibility(View.GONE);
 
-        botonCapacidad.setEnabled(false);
+        botonCapacidad.setEnabled(true);
 
         //Se crea un adaptador para podermanejar el bluethoot del celular
         //mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -176,7 +176,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 //showToast("Voy a mandar un pedido para ver capacidad al arduino");
                 Log.i("Envio","Mando al arduino solicitud para ver la capacidad");
-                mConnectedThread.write("3");
+                String data = "{\"c\":0,\"d\":{\"mw\":999,\"md\":99,\"cd\":888}}";
+                BluetoothManager.getService().sendData(data);
             }
         });
 
@@ -217,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i("Ejecuto","Ejecuto OnResume");
         super.onResume();
         BluetoothManager.bindService(this);
+
 //
 //        //Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
 //        Intent intent=getIntent();

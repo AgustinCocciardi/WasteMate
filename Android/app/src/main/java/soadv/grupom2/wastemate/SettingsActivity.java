@@ -297,7 +297,7 @@ public class SettingsActivity extends AppCompatActivity {
                 if(i>=0){
                     availableDevices.set(i,device);
                 }
-else {
+            else {
                     availableDevices.add(device);
                 }
                 mAvailableDevicesAdapter.setData(availableDevices);

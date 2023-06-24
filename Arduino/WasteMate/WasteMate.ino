@@ -1,7 +1,8 @@
-#include <Servo.h>
+#include <PWMServo.h>
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include "rgb_lcd.h"
+#include <ArduinoJson.h>
 
 //Solo habilitamos los logs de debug en caso de ser necesario, para evitar carga extra en la versión en producción.
 #define SERIAL_DEBUG_ENABLED 1
@@ -37,14 +38,13 @@
 #define MINIMUM_EVENT_INDEX 0
 #define MAXIMUM_EVENT_INDEX 9
 #define MAXIMUM_INDEX_VERIFICATIONS 4
+#define DETECTION_TIMES 10
 #define _0_DEGREES 0
 #define _90_DEGREES 90
 #define _180_DEGREES 180
-#define MINIMUM_VALUE_FLEX_SENSOR 0
-#define MAXIMUM_VALUE_FLEX_SENSOR 700
-#define MAXIMUM_FLEXIBILITY 150
-#define CRITICAL_DISTANCE 100
-#define MINIMUM_ALLOWED_DISTANCE 50
+#define MAXIMUM_WEIGHT_ALLOWED 500
+#define CRITICAL_DISTANCE 40
+#define MINIMUM_ALLOWED_DISTANCE 15
 #define LCD_MEMORY 32
 #define LCD_COLUMNS 16
 #define LCD_ROWS 2
@@ -56,7 +56,7 @@
 #define PULSE_DURATION_TO_DISTANCE_FACTOR 0.01715 
 
 //Definimos una zona muerta para que alcanzar el valor crítico de distancia no haga transiciones constantes por fluctuaciones en la lectura de los sensores.
-#define DEADBAND 1
+#define DEADBAND 10
 
 //Utilizamos un pulso disparador de 10 microsegundos para el correcto funcionamiento del sensor ultrasonido porque es lo recomendado.
 #define TRIGGER_PULSE 10
@@ -69,10 +69,10 @@
 #define MESSAGE_ERROR                     "LA OPERACION NO ES VALIDA PARA EL ESTADO ACTUAL"
 
 //COMANDOS
-#define CMD_START_MAINTENANCE     '0'
-#define CMD_MAINTENANCE_FINISHED  '1'
-#define CMD_DISABLE               '2'
-
+#define CMD_START_MAINTENANCE     "0"
+#define CMD_MAINTENANCE_FINISHED  "1"
+#define CMD_DISABLE               "2"
+#define CMD_CONFIGURE_THRESHOLDS  "3"
 //TIPOS DE DATOS
 typedef enum status
 { 
@@ -137,13 +137,14 @@ void show_status(t_status status);
 void log_status();
 void log(const char* message);
 void calibrate_pir();
+void calibrate_flex_sensor();
 
 //VARIABLES GLOBALES
 const int colorR = 255;
 const int colorG = 0;
 const int colorB = 0;
 
-Servo servo;
+PWMServo servo;
 rgb_lcd lcd;
 SoftwareSerial bluetooth_serial(10,11); // RX | TX
 
@@ -152,6 +153,12 @@ t_timer timer_presence;
 t_status current_state;
 t_status previous_state;
 t_event current_event;
+
+int is_open = 0;
+int presence_detection_counter = 0;
+int critical_distance = CRITICAL_DISTANCE;
+int minimum_allowed_distance = MINIMUM_ALLOWED_DISTANCE;
+int maximum_weight_allowed = MAXIMUM_WEIGHT_ALLOWED;
 
 t_actions action[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
 {
@@ -214,24 +221,23 @@ void setup()
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
   lcd.setRGB(colorR, colorG, colorB);
-  // Print a message to the LCD.
-  lcd.print("CALIBRANDO...");
-
-  delay(1000);
-
-  calibrate_pir();
-
+  
   pinMode(PIR_SENSOR, INPUT);
   pinMode(FLEX_SENSOR, INPUT);
   pinMode(ULTRASONIC_SENSOR_TRIGGER, INPUT);
   servo.attach(SERVOMOTOR);  
+  
+  lcd.print("CALIBRANDO...");
+  calibrate_pir();
+  calibrate_flex_sensor();
+
+  
   timer_general.limit = GENERAL_TIMEOUT_LIMIT;
   timer_presence.limit = PRESENCE_TIMEOUT_LIMIT;
   initialize();
   current_state = ST_UNF;
   previous_state = ST_UNF;
   show_status(current_state);
-  notify_state();
   log_status();
 }
 
@@ -249,7 +255,6 @@ void loop()
     {
       show_status(current_state);
       notify_state();
-
       log_status();
     }
   }
@@ -283,19 +288,20 @@ bool verify_presence()
   int value = digitalRead(PIR_SENSOR);
   if (value == HIGH)
   {
-    reset_timer(&timer_presence);
-    current_event = EV_PD;
-    log("Presence");
+    presence_detection_counter++;
+    if(presence_detection_counter >= DETECTION_TIMES)
+    {
+        reset_timer(&timer_presence);
+        current_event = EV_PD;
+        presence_detection_counter = 0;
+    }   
     return true;
   }
   else
   {
-    log("No Presence");
-
     if(timer_presence.current_time > 0 && timeout_reached(&timer_presence))
     {
       current_event = EV_NPD;
-      log("Timeout");
     }
     return false;
   }
@@ -306,10 +312,8 @@ bool verify_presence()
 //0 - Nada flexionado,  1 - Completamente flexionado.
 bool verify_weight()
 {
-  int value = analogRead(FLEX_SENSOR);              
-  int degrees = map(value, MINIMUM_VALUE_FLEX_SENSOR, MAXIMUM_VALUE_FLEX_SENSOR, _0_DEGREES, _180_DEGREES);  
-
-  if(degrees >= MAXIMUM_FLEXIBILITY)
+  int flex_value = analogRead(FLEX_SENSOR);              
+  if(flex_value >= maximum_weight_allowed)
   {
     current_event = EV_MAX_WR;
     return true;
@@ -321,35 +325,43 @@ bool verify_weight()
 //Se reemplazará por la implementación real.
 bool verify_message()
 {
-  byte read = 0;
+  //int read = 0;
+  bluetooth_serial.flush();
   if(bluetooth_serial.available())
   {
     //se los lee y se los muestra en el monitor serie
-    read = bluetooth_serial.read();
-    //Serial.write("leyendoAA:");
-    Serial.write(read);
-    //read = Serial.read();
-    switch(read)
-    {
-      case CMD_START_MAINTENANCE:
-        current_event = EV_SM;
-        return true;
-        break;
-      case CMD_DISABLE:
-        current_event = EV_DIS;
-        break;
-      case CMD_MAINTENANCE_FINISHED:
-        current_event = EV_MF;
-        return true;
-        break;
-      default:
-        return false;
-      break;
+    String read = bluetooth_serial.readString();
+    DynamicJsonDocument doc(60);
+
+    bluetooth_serial.flush();
+    read.trim();
+    Serial.println(read);
+
+    DeserializationError error = deserializeJson(doc, read);
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
     }
-  }
-  else
-  {
-    return false;
+
+  String code = doc["c"];
+  Serial.println(code);
+    if(code == CMD_START_MAINTENANCE){
+      current_event = EV_SM;
+    return true;
+    }
+    else if(code == CMD_DISABLE){
+      current_event = EV_DIS;
+      return true;
+    }
+    else if(code == CMD_MAINTENANCE_FINISHED){
+      current_event = EV_MF;
+      return true;
+    }
+    else if(code == CMD_CONFIGURE_THRESHOLDS){
+      minimum_allowed_distance = doc["d"]["md"];
+      maximum_weight_allowed =  doc["d"]["mw"];;
+    }
   }
 }
 
@@ -357,18 +369,18 @@ bool verify_message()
 bool verify_capacity()
 {
   double distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
-  if(distance < MINIMUM_ALLOWED_DISTANCE)
+  if(distance < minimum_allowed_distance)
   { 
     current_event = EV_MCR;
   }
   else
   {
     //Agregamos una franja de tolerancia, ya que sin ella teníamos transiciones constantes en el umbral por variaciones de lectura del sensor.
-    if(distance < CRITICAL_DISTANCE - DEADBAND)
+    if(distance < critical_distance - DEADBAND)
     {
       current_event = EV_CCR ;
     }
-    else if (distance >= CRITICAL_DISTANCE + DEADBAND)
+    else if (distance >= critical_distance + DEADBAND)
     {
       current_event = EV_UNF;
     }
@@ -400,39 +412,47 @@ void none()
 //Abre la tapa del contenedor
 void open() 
 {
-  move_servomotor(_180_DEGREES);
+  if(!is_open)
+  {
+    move_servomotor(_180_DEGREES);
+    is_open = 1;
+  }
 }
 
 //Cierra la tapa del contenedor
 void close()
 {
-  move_servomotor(_90_DEGREES);
+  if(is_open)
+  {
+    move_servomotor(_90_DEGREES);
+    is_open = 0;
+  }
 }
 
 //Deshabilita el contenedor y notifica que se necesita mantenimiento
 void disable()
 {
-  send_notification(MESSAGE_MAINTENANCE_NEEDED);
+  send_notification(MESSAGE_MAINTENANCE_NEEDED); //TODO:: VER SI ES NECESARIO
   close();
 }
 
 //Deshabilita el contenedor y notifica que se solicitó deshabilitarlo.
 void request_disabling()
 {
-  send_notification(MESSAGE_REQUEST_DISABLING);
+  send_notification(MESSAGE_REQUEST_DISABLING); //TODO: VER SI ES NECESARIO
   disable();
 }
 
 //Notifica que se inició el mantenimiento del contenedor.
 void send_maintenance()
 {
-  send_notification(MESSAGE_MAINTENANCE);
+  send_notification(MESSAGE_MAINTENANCE); //TODO: VER SI ES NECESARIO.
 }
 
 //Reinicia el sistema al estado inicial.
 void reset()
 {
-  send_notification(MESSAGE_MAINTENANCE_FINISHED);
+  send_notification(MESSAGE_MAINTENANCE_FINISHED); //TODO: VER SI ES NECESARIO.
   initialize();
   close();
 }
@@ -504,8 +524,7 @@ void error()
 //Envía una notificación a la aplicación.
 void send_notification(const char* message)
 {
-  Serial.print("BLUETOOTH: ");
-  bluetooth_serial.write(message); 
+  bluetooth_serial.println(message); 
 }
 
 //Log de los estados.
@@ -544,4 +563,31 @@ void calibrate_pir()
     }
     delay(1000);
   } while (is_ok != 'y');
+}
+
+void calibrate_flex_sensor()
+{
+ char is_ok = 'n';
+  do
+  {
+    if(Serial.available())
+    {
+      is_ok = Serial.read();
+    }
+    delay(1000);
+    Serial.println("Ingrese 'y' haya colocado el peso limite.");
+
+  } while (is_ok != 'y'); 
+  maximum_weight_allowed = analogRead(FLEX_SENSOR);       
+  is_ok = 'n';
+  do
+  {
+    if(Serial.available())
+    {
+      is_ok = Serial.read();
+    }
+    delay(1000);
+    Serial.println("Ingrese 'y' haya quitado el peso.");
+
+  } while (is_ok != 'y'); 
 }
