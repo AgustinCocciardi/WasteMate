@@ -9,6 +9,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,9 +20,11 @@ import java.util.UUID;
 public class BluetoothService extends Service {
 
     private static BluetoothService instance;
+
     private BluetoothAdapter bluetoothAdapter;
+
     private ConnectThread connectThread;
-    private final IBinder binder = new LocalBinder();
+
     public static final String TAG = "MyService";
 
     public static BluetoothService getInstance() {
@@ -39,9 +43,10 @@ public class BluetoothService extends Service {
         return START_STICKY;
     }
 
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return binder;
+        return null;
     }
 
     @Override
@@ -87,11 +92,10 @@ public class BluetoothService extends Service {
 
         public void write(String input) {
             byte[] msgBuffer = input.getBytes();           //converts entered String into bytes
-//            try {
-//                //mmOutStream.write(msgBuffer);                //write bytes over BT connection via outstream
-//            } catch (IOException e) {
-//                //if you cannot write, close the application
-//            }
+            try {
+                mmOutStream.write(msgBuffer);                //write bytes over BT connection via outstream
+            } catch (IOException e) {
+            }
         }
 
         public void cancel() {
@@ -117,21 +121,19 @@ public class BluetoothService extends Service {
 
         public void run() {
             bluetoothAdapter.cancelDiscovery();
-//            try {
-                //socket = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-                //socket.connect();
+            try {
+                socket.connect();
                 InputStream tmpIn = null;
                 OutputStream tmpOut = null;
+                try
+                {
+                    //Create I/O streams for connection
+                    tmpIn = socket.getInputStream();
+                    tmpOut = socket.getOutputStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
 
-//                try
-//                {
-//                    //Create I/O streams for connection
-//                    //tmpIn = socket.getInputStream();
-//                    //tmpOut = socket.getOutputStream();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//
-//                }
+                }
 
                 mmInStream = tmpIn;
                 mmOutStream = tmpOut;
@@ -142,42 +144,30 @@ public class BluetoothService extends Service {
                 //el hilo secundario se queda esperando mensajes del HC05
                 while (!stop)
                 {
-                    try {
-                        Intent broadcastIntent = new Intent();
-                        broadcastIntent.setAction("com.example.MY_ACTION");
-                        broadcastIntent.putExtra("message", "Hello from the service!");
-                        sendBroadcast(broadcastIntent);
-                        Thread.sleep(3000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                    try
+                    {
+                        if(mmInStream.available()>0)
+                        {
+                            bytes = mmInStream.read(buffer);
+                            String readMessage = new String(buffer, 0, bytes);
+                            Intent broadcastIntent = new Intent();
+                            broadcastIntent.setAction(Actions.CUSTOM_ACTION_STATUS_CHANGED);
+                            broadcastIntent.putExtra("status", readMessage);
+                            sendBroadcast(broadcastIntent);
+                        }
+                    } catch (IOException e) {
+                        break;
                     }
-//                    try
-//                    {
-//                        //se leen los datos del Bluethoot
-////                        if(mmInStream.available()>0) {
-////                            bytes = mmInStream.read(buffer);
-////                            String readMessage = new String(buffer, 0, bytes);
-////                        }
-//                        //se muestran en el layout de la activity, utilizando el handler del hilo
-//                        // principal antes mencionado
-//                        //bluetoothIn.obtainMessage(handlerState, bytes, -1, readMessage).sendToTarget();
-//                    } catch (IOException e) {
-//                        break;
-//                    }
                 }
-                int c = 2;
-                Log.i("Ejecuto", "service: on destroy - salgo del while");
-
-            //mConnectedThread.write("{\"c\":0,\"d\":{\"mw\":999,\"md\":99,\"cd\":888}}");
-                // Handle the connected socket here
-//            } catch (IOException connectException) {
-//                connectException.printStackTrace();
-//                try {
-//                    socket.close();
-//                } catch (IOException closeException) {
-//                    closeException.printStackTrace();
-//                }
-//            }
+            // Handle the connected socket here
+            } catch (IOException connectException) {
+                connectException.printStackTrace();
+                try {
+                    socket.close();
+                } catch (IOException closeException) {
+                    closeException.printStackTrace();
+                }
+            }
         }
     }
 }

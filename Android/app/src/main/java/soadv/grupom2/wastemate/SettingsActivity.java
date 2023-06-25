@@ -188,6 +188,9 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         setContentView(R.layout.activity_settings);
 
         adminSettingsLayout = findViewById(R.id.layoutAdminSettings);
+        txtCriticalDistance = findViewById(R.id.txtCriticalCapacity);
+        txtMinimumDistance= findViewById(R.id.txtMinimumDistance);
+        txtWeightLimit = findViewById(R.id.txtWeightLimit);
         btnSendSettings = findViewById(R.id.btnSendSettings);
         btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
 
@@ -209,10 +212,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             Set<BluetoothDevice> bondedDevices = bluetoothService.getAdapter().getBondedDevices();
             if (bondedDevices != null && bondedDevices.size() != 0) {
                 pairedDevices.addAll(bondedDevices);
-                pairedDevices.addAll(bondedDevices);
-                pairedDevices.addAll(bondedDevices);
-                pairedDevices.addAll(bondedDevices);
-
             }
         }
 

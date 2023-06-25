@@ -33,6 +33,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,31 +44,34 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     //region Attributes
     private BluetoothService myService;
+    private boolean isBound = false;
 
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            BluetoothService.LocalBinder localBinder = (BluetoothService.LocalBinder) binder;
+            myService = localBinder.getService();
+            isBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            isBound = false;
+        }
+    };
     private Button botonCapacidad;
+    private Button btnIniciarMantenimiento;
+    private Button btnMantenimientoFinalizado;
+    private Button btnDisable;
     private ImageButton botonConfiguracion;
-
-    private TextView txtEstado;
-    private Button btnActivar;
 
     private ProgressDialog mProgressDlg;
 
-    private ArrayList<BluetoothDevice> mDeviceList = new ArrayList<BluetoothDevice>();
 
-//    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothSocket btSocket = null;
     private StringBuilder recDataString = new StringBuilder();
-
-    private ConnectedThread mConnectedThread;
-
-    // SPP UUID service  - Funciona en la mayoria de los dispositivos
-    private static final UUID BTMODULEUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
-    // String for MAC address del Hc05
-    private static String address = null;
 
     Handler bluetoothIn;
     final int handlerState = 0; //used to identify handler message
@@ -77,8 +83,6 @@ public class MainActivity extends AppCompatActivity {
     //con solo solicitarlos en el Manifest es suficiente
 
     ArrayList<String> permissions;
-
-    ActivityResultLauncher<Intent> enableBluetoothActivityLauncher;
     ActivityResultLauncher<Intent> disableBluetoothActivityLauncher;
 
     private TextView capacidadText;
@@ -88,9 +92,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAPACIDAD_REAL_POSICION = 0;
     private static final int CAPACIDAD_CRITICA_POSICION = 1;
     private static final int CAPACIDAD_MINIMA_POSICION = 2;
-    private static final int rojo = Color.RED;
-    private static final int azul = Color.BLUE;
-    private static final int verde = Color.GREEN;
+
     private BroadcastReceiver broadcastReceiver;
 
     //endregion
@@ -128,16 +130,13 @@ public class MainActivity extends AppCompatActivity {
         botonCapacidad = (Button) findViewById(R.id.botonCapacidad);
         botonConfiguracion = (ImageButton) findViewById(R.id.botonConfiguracion);
 
-        txtEstado = (TextView) findViewById(R.id.txtEstado);
-        btnActivar = (Button) findViewById(R.id.btnActivar);
-
+        btnIniciarMantenimiento = (Button) findViewById(R.id.btnIniciarMantenimiento);
+        btnMantenimientoFinalizado = (Button) findViewById(R.id.btnMantenimientoFinalizado);
+        btnDisable = (Button) findViewById(R.id.btnDisable);
         capacidadText = (TextView) findViewById(R.id.capacidadText);
-        capacidadText.setVisibility(View.GONE);
+        //capacidadText.setVisibility(View.GONE);
 
         botonCapacidad.setEnabled(true);
-
-        //Se crea un adaptador para podermanejar el bluethoot del celular
-        //mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         //Se Crea la ventana de dialogo que indica que se esta buscando dispositivos bluethoot
         mProgressDlg = new ProgressDialog(this);
@@ -163,8 +162,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 //showToast("Voy a mandar un pedido para ver capacidad al arduino");
                 Log.i("Envio","Mando al arduino solicitud para ver la capacidad");
-                String data = "{\"c\":0,\"d\":{\"mw\":999,\"md\":99,\"cd\":888}}";
-                BluetoothService.getInstance().sendData(data);
+                BluetoothMessage bluetoothMessage = new BluetoothMessage(0);
+                BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
             }
         });
 
@@ -172,26 +171,11 @@ public class MainActivity extends AppCompatActivity {
         botonConfiguracion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Cuando esté emparejado con el arduino, le pasaré la dirección del bluetooth a esta activity
-                if(address != null)
-                {
-                    Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    //intent.putExtra("Direccion_Bluethoot", address);
-                    startActivity(intent);
-                }
-                else
-                {
-                    //Si no estoy emparejado con el arduino, no debo enviar la direccion
-                    Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(intent);
-                }
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
             }
         });
-        enableBluetoothActivityLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                (result) -> enableBluetoothCallback());
 
         disableBluetoothActivityLauncher= registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -204,17 +188,61 @@ public class MainActivity extends AppCompatActivity {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String message = intent.getStringExtra("message");
+                String message = intent.getStringExtra("status");
                 Log.d(BluetoothService.TAG, "Received message: " + message);
+                if (message == "CON CAPACIDAD")
+                {
+                    capacidadText.setTextColor(Color.GREEN);
+                }
+                else if(message == "CAPACIDAD CRITICA")
+                {
+                    capacidadText.setTextColor(Color.YELLOW);
+                }
+                else if(message == "SIN CAPACIDAD")
+                {
+                    capacidadText.setTextColor(Color.RED);
+                }
+                else  if(message == "MANTENIMIENTO"){
+                    capacidadText.setTextColor(Color.BLUE);
+                }
+                capacidadText.setText(message);
             }
         };
-        IntentFilter filter = new IntentFilter("com.example.MY_ACTION");
+
+        IntentFilter filter = new IntentFilter(Actions.CUSTOM_ACTION_STATUS_CHANGED);
         registerReceiver(broadcastReceiver, filter);
 
         // Access the singleton instance of the service
         myService = BluetoothService.getInstance();
 
+        btnIniciarMantenimiento.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i("Envio","Envio mensaje de inicio mantenimiento");
+                BluetoothMessage bluetoothMessage = new BluetoothMessage(0);
+                BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
+            }
+        });
+
+        btnMantenimientoFinalizado.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i("Envio","Envio mensaje de fin de mantenimiento");
+                BluetoothMessage bluetoothMessage = new BluetoothMessage(1);
+               BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
+            }
+        });
+
+        btnDisable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i("Envio","Envio mensaje de desahabilitar????");
+                BluetoothMessage bluetoothMessage = new BluetoothMessage(2);
+               BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
+            }
+        });
     }
+
 
     @Override
     //Cada vez que se detecta el evento OnResume se establece la comunicacion con el HC05, creando un
@@ -317,6 +345,8 @@ public class MainActivity extends AppCompatActivity {
     //recibe mas broadcast del SO. del bluethoot
     public void onDestroy()
     {
+        BluetoothService.getInstance().disconnect();
+
         super.onDestroy();
         Intent serviceIntent = new Intent(this, BluetoothService.class);
         stopService(serviceIntent);
@@ -350,65 +380,17 @@ public class MainActivity extends AppCompatActivity {
 //        }
     }
 
-    private void showEnabled() {
-        txtEstado.setText("Bluetooth Activado");
-        txtEstado.setTextColor(Color.BLUE);
-
-        btnActivar.setText("Desactivar");
-        btnActivar.setEnabled(true);
-    }
-
     private void showDisabled() {
-        txtEstado.setText("Bluetooth Desactivado");
-        txtEstado.setTextColor(Color.RED);
-
-        btnActivar.setText("Activar");
-        btnActivar.setEnabled(true);
-
-        capacidadText.setText("");
-        capacidadText.setVisibility(View.GONE);
+        //capacidadText.setText("");
+        //capacidadText.setVisibility(View.GONE);
 
         botonCapacidad.setEnabled(false);
-    }
-
-    private void showUnsupported() {
-        txtEstado.setText("Bluetooth no es soportado por el dispositivo movil");
-
-        btnActivar.setText("Activar");
-        btnActivar.setEnabled(false);
     }
 
     private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-
-    private View.OnClickListener btnActivarListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-//            if (mBluetoothAdapter.isEnabled()) {
-//                disableBluetooth();
-//            } else {
-//                enableBluetooth();
-//            }
-        }
-    };
-
-    private void disableBluetooth() {
-        Intent intent = new Intent("android.bluetooth.adapter.action.REQUEST_DISABLE");
-        disableBluetoothActivityLauncher.launch(intent);
-    }
-
-    private void enableBluetooth(){
-        IntentFilter discoveryFinished = new IntentFilter();
-        discoveryFinished.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        Intent intent = new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE");
-        enableBluetoothActivityLauncher.launch(intent);
-    }
-
-    private void enableBluetoothCallback(){
-        showEnabled();
-    }
 
     private void disableBluetoothCallback(){
         showDisabled();
@@ -427,12 +409,6 @@ public class MainActivity extends AppCompatActivity {
     private  boolean checkPermissions() {
         int result;
         List<String> listPermissionsNeeded = new ArrayList<>();
-
-        //Se chequea si la version de Android es menor a la 6
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
-
 
         for (String p:permissions) {
             result = ContextCompat.checkSelfPermission(this,p);
@@ -497,89 +473,22 @@ public class MainActivity extends AppCompatActivity {
                         if (capacidadReal >= capacidadMinima)
                         {
                             capacidadText.setText("Sin Capacidad");
-                            capacidadText.setTextColor(rojo);
+                            capacidadText.setTextColor(Color.RED);
                         }
                         else if(capacidadReal >= capacidadCritica)
                         {
                             capacidadText.setText("Capacidad Critica");
-                            capacidadText.setTextColor(azul);
+                            capacidadText.setTextColor(Color.BLUE);
                         }
                         else
                         {
                             capacidadText.setText("Con Capacidad");
-                            capacidadText.setTextColor(verde);
+                            capacidadText.setTextColor(Color.GREEN);
                         }
                         recDataString.delete(0, recDataString.length());
                     }
                 }
             }
         };
-    }
-
-    //Metodo que crea el socket bluethoot
-    private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
-
-        return  device.createRfcommSocketToServiceRecord(BTMODULEUUID);
-    }
-
-    private class ConnectedThread extends Thread
-    {
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
-
-        //Constructor de la clase del hilo secundario
-        public ConnectedThread(BluetoothSocket socket)
-        {
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-
-            try
-            {
-                //Create I/O streams for connection
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (IOException e) { }
-
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
-        }
-
-        //metodo run del hilo, que va a entrar en una espera activa para recibir los msjs del HC05
-        public void run()
-        {
-            byte[] buffer = new byte[256];
-            int bytes;
-
-            //el hilo secundario se queda esperando mensajes del HC05
-            while (true)
-            {
-                try
-                {
-                    //se leen los datos del Bluethoot
-                    bytes = mmInStream.read(buffer);
-                    String readMessage = new String(buffer, 0, bytes);
-
-                    //se muestran en el layout de la activity, utilizando el handler del hilo
-                    // principal antes mencionado
-                    bluetoothIn.obtainMessage(handlerState, bytes, -1, readMessage).sendToTarget();
-                } catch (IOException e) {
-                    break;
-                }
-            }
-        }
-
-
-        //write method
-        public void write(String input) {
-            byte[] msgBuffer = input.getBytes();           //converts entered String into bytes
-            try {
-                mmOutStream.write(msgBuffer);                //write bytes over BT connection via outstream
-            } catch (IOException e) {
-                //if you cannot write, close the application
-                showToast("La conexion fallo");
-                finish();
-
-            }
-        }
     }
 }

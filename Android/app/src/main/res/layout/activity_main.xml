@@ -6,27 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/btnActivar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Activar"
-        app:layout_constraintTop_toBottomOf="@+id/txtEstado"
-        tools:layout_editor_absoluteX="0dp" />
-
-    <TextView
-        android:id="@+id/txtEstado"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:text="Bluetooth Desactivado"
-        android:textColor="#ff0000"
-        android:textSize="17sp"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="0dp" />
-
     <TextView
         android:id="@+id/textView"
         android:layout_width="200dp"
@@ -40,45 +19,84 @@
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.393" />
+        app:layout_constraintVertical_bias="0.103" />
 
     <Button
         android:id="@+id/botonCapacidad"
-        android:layout_width="224dp"
-        android:layout_height="56dp"
-        android:layout_marginTop="68dp"
-        android:text="Capacidad"
+        android:layout_width="62dp"
+        android:layout_height="53dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="117dp"
+        android:layout_marginEnd="33dp"
         android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:icon="@drawable/baseline_refresh_24"
+        app:iconGravity="textTop"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.413" />
+        app:layout_constraintStart_toEndOf="@+id/capacidadText"
+        app:layout_constraintTop_toBottomOf="@+id/btnDisable" />
 
     <ImageButton
         android:id="@+id/botonConfiguracion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="56dp"
+        android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/botonCapacidad"
-        app:layout_constraintVertical_bias="0.16"
         app:srcCompat="@mipmap/config50" />
 
     <TextView
         android:id="@+id/capacidadText"
         android:layout_width="240dp"
         android:layout_height="54dp"
-        android:layout_marginTop="56dp"
-        android:text="Capacidad"
+        android:layout_marginStart="52dp"
+        android:layout_marginTop="340dp"
+        android:text="Estado"
         android:textAlignment="center"
         android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/botonCapacidad"
+        app:layout_constraintEnd_toStartOf="@+id/botonCapacidad"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <Button
+        android:id="@+id/btnIniciarMantenimiento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="31dp"
+        android:layout_marginEnd="161dp"
+        android:layout_marginBottom="16dp"
+        android:text="Iniciar mantenimiento"
+        app:layout_constraintBottom_toTopOf="@+id/btnMantenimientoFinalizado"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.24" />
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <Button
+        android:id="@+id/btnDisable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="161dp"
+        android:text="Deshabilitar contenedor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnMantenimientoFinalizado" />
+
+    <Button
+        android:id="@+id/btnMantenimientoFinalizado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="156dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="161dp"
+        android:layout_marginBottom="16dp"
+        android:text="Finalizar mantinimiento"
+        app:layout_constraintBottom_toTopOf="@+id/btnDisable"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnIniciarMantenimiento" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
