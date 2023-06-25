@@ -17,17 +17,21 @@ import java.util.UUID;
 
 public class BluetoothService extends Service {
 
-    private static BluetoothAdapter bluetoothAdapter;
-    private static ConnectThread connectThread;
+    private static BluetoothService instance;
+    private BluetoothAdapter bluetoothAdapter;
+    private ConnectThread connectThread;
     private final IBinder binder = new LocalBinder();
+    public static final String TAG = "MyService";
+
+    public static BluetoothService getInstance() {
+        return instance;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        if(bluetoothAdapter == null)
-        {
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        }
+        instance = this;
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
     @Override
@@ -138,8 +142,15 @@ public class BluetoothService extends Service {
                 //el hilo secundario se queda esperando mensajes del HC05
                 while (!stop)
                 {
-                    int b;
-b=3;
+                    try {
+                        Intent broadcastIntent = new Intent();
+                        broadcastIntent.setAction("com.example.MY_ACTION");
+                        broadcastIntent.putExtra("message", "Hello from the service!");
+                        sendBroadcast(broadcastIntent);
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
 //                    try
 //                    {
 //                        //se leen los datos del Bluethoot

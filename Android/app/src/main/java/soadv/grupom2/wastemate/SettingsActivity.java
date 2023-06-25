@@ -9,14 +9,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,8 +31,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Set;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity implements SensorEventListener {
 
+    private static final float PRECISION_CHANGE = 30;
+
+    //region ViewLinks
     private ArrayList<BluetoothDevice> pairedDevices;
     private ArrayList<BluetoothDevice> availableDevices;
     private RecyclerView availableDevicesListView;
@@ -33,6 +43,21 @@ public class SettingsActivity extends AppCompatActivity {
     private DeviceListAdapter mPairedDevicesAdapter;
     private DeviceListAdapter mAvailableDevicesAdapter;
     private BluetoothSwitchCompat bluetoothSwitch;
+    //region Admin Settings
+    private ConstraintLayout adminSettingsLayout;
+    private TextView txtWeightLimit;
+    private  TextView txtMinimumDistance;
+    private TextView txtCriticalDistance;
+
+    //endregion
+    private Button btnSendSettings;
+    private ConstraintLayout mainSettingsLayout;
+
+    //endregion
+
+    private SensorManager sensor;
+    private boolean showingAdminSettings;
+
     ActivityResultLauncher<Intent> enableBluetoothActivityLauncher;
     ActivityResultLauncher<Intent> disableBluetoothActivityLauncher;
 
@@ -53,7 +78,7 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onClick(int position, BluetoothDevice model) {
             if(model.getBondState() == BluetoothDevice.BOND_BONDED){
-                BluetoothService bluetoothService = BluetoothManager.getService();
+                BluetoothService bluetoothService = BluetoothService.getInstance();
                 if (bluetoothService != null) {
                     // Use the Bluetooth service methods
                     bluetoothService.connectToDevice(model);
@@ -92,6 +117,7 @@ public class SettingsActivity extends AppCompatActivity {
             if (state == BluetoothDevice.BOND_BONDED) {
                 availableDevices.remove(device);
                 pairedDevices.add(device);
+
             }
             else if (state == BluetoothDevice.BOND_NONE) {
                 availableDevices.add(device);
@@ -112,6 +138,33 @@ public class SettingsActivity extends AppCompatActivity {
         vh.vw.setBackgroundColor(Color.parseColor("#FF6200EE"));
         }
     };
+    private View.OnClickListener btnSendSettingsOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int weightLimit = Integer.parseInt(txtWeightLimit.getText().toString());
+            int minimumDistance = Integer.parseInt(txtMinimumDistance.getText().toString());
+            int criticalDistance = Integer.parseInt(txtCriticalDistance.getText().toString());
+            BluetoothMessage message = new BluetoothMessage(3,weightLimit, minimumDistance, criticalDistance);
+            BluetoothService.getInstance().sendData(message.Serialize());
+
+            adminSettingsLayout.setVisibility(View.GONE);
+            mainSettingsLayout.setVisibility(View.VISIBLE);
+            showingAdminSettings = false;
+        }
+    };
+
+    @Override
+    public void onBackPressed() {
+        if(showingAdminSettings){
+            adminSettingsLayout.setVisibility(View.GONE);
+            mainSettingsLayout.setVisibility(View.VISIBLE);
+            showingAdminSettings = false;
+        }
+        else {
+            super.onBackPressed();
+        }
+    }
+
 
     private void disableBluetooth() {
         Intent intent = new Intent("android.bluetooth.adapter.action.REQUEST_DISABLE");
@@ -129,10 +182,18 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        BluetoothManager.bindService(this);
 
+        showingAdminSettings = false;
         availableDevices = new ArrayList<>();
         setContentView(R.layout.activity_settings);
+
+        adminSettingsLayout = findViewById(R.id.layoutAdminSettings);
+        btnSendSettings = findViewById(R.id.btnSendSettings);
+        btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
+
+        mainSettingsLayout = findViewById(R.id.layoutMainSettings);
+
+        sensor = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         //defino los componentes de layout
         availableDevicesListView = (RecyclerView) findViewById(R.id.table_available);
@@ -143,11 +204,15 @@ public class SettingsActivity extends AppCompatActivity {
         pairedDevices = new ArrayList<>();
         //Se crea un adaptador para podermanejar el bluethoot del celular
         //mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothService bluetoothService = BluetoothManager.getService();
+        BluetoothService bluetoothService = BluetoothService.getInstance();
         if (bluetoothService != null) {
             Set<BluetoothDevice> bondedDevices = bluetoothService.getAdapter().getBondedDevices();
             if (bondedDevices != null && bondedDevices.size() != 0) {
                 pairedDevices.addAll(bondedDevices);
+                pairedDevices.addAll(bondedDevices);
+                pairedDevices.addAll(bondedDevices);
+                pairedDevices.addAll(bondedDevices);
+
             }
         }
 
@@ -236,7 +301,7 @@ public class SettingsActivity extends AppCompatActivity {
     //socketBluethoot
     protected void onResume() {
         super.onResume();
-
+registerSenser();
     }
 
     @Override
@@ -247,6 +312,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        unregisterSenser();
     }
 
     @Override
@@ -257,7 +323,6 @@ public class SettingsActivity extends AppCompatActivity {
         unregisterReceiver(bluetoothDiscoveryStartedReceiver);
         unregisterReceiver(bluetoothDeviceFoundReceiver);
         unregisterReceiver(bluetoothDeviceBondStateChangedReceiver);
-        BluetoothManager.unbindService(this);
         super.onDestroy();
     }
 
@@ -306,27 +371,33 @@ public class SettingsActivity extends AppCompatActivity {
         }
     };
 
-    //Metodo que actua como Listener de los eventos que ocurren en los componentes graficos de la activty
-//    private DeviceListAdapter.OnPairButtonClickListener listenerBotonEmparejar = new DeviceListAdapter.OnPairButtonClickListener() {
-//        @Override
-//        public void onPairButtonClick(int position) {
-//            //Obtengo los datos del dispostivo seleccionado del listview por el usuario
-//            BluetoothDevice device = availableDevices.get(position);
-//
-//            //Se checkea si el sipositivo ya esta emparejado
-//            if (device.getBondState() == BluetoothDevice.BOND_BONDED)
-//            {
-//                //Si esta emparejado,quiere decir que se selecciono desemparjar y entonces se le desempareja
-//                unpairDevice(device);
-//            }
-//            else
-//            {
-//
-//                //Si no esta emparejado,quiere decir que se selecciono emparjar y entonces se le empareja
-//                pairDevice(device);
-//
-//            }
-//        }
-//    };
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        int tipoSensor = sensorEvent.sensor.getType();
+        float valoresSensor[] = sensorEvent.values;
+        if (tipoSensor == Sensor.TYPE_ACCELEROMETER)
+        {
+            if ((Math.abs(valoresSensor[0]) > PRECISION_CHANGE || Math.abs(valoresSensor[1]) > PRECISION_CHANGE || Math.abs(valoresSensor[2]) > PRECISION_CHANGE))
+            {
+                adminSettingsLayout.setVisibility(View.VISIBLE);
+                mainSettingsLayout.setVisibility(View.GONE);
+                showingAdminSettings = true;
+            }
+        }
+    }
 
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    private void registerSenser()
+    {
+        sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    private void unregisterSenser()
+    {
+        sensor.unregisterListener(this);
+    }
 }

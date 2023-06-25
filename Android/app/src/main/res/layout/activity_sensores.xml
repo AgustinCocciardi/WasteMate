@@ -7,7 +7,7 @@
     tools:context=".Sensores">
 
     <TextView
-        android:id="@+id/etiquetaCapacidadMinima"
+        android:id="@+id/tvMinimumDistance"
         android:layout_width="178dp"
         android:layout_height="54dp"
         android:layout_marginTop="24dp"
@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.068"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etiquetaCapacidad" />
+        app:layout_constraintTop_toBottomOf="@+id/tvCriticalCapacity" />
 
     <TextView
         android:id="@+id/txtEstadoBluetooth"
@@ -39,7 +39,7 @@
         android:layout_marginTop="16dp"
         android:enabled="false"
         android:text="Buscar Dispositivos"
-        app:layout_constraintBottom_toTopOf="@+id/textView2"
+        app:layout_constraintBottom_toTopOf="@+id/tvAdminSettingsTitle"
         app:layout_constraintTop_toBottomOf="@+id/btnEmparejarDispositivos"
         app:layout_constraintVertical_bias="0.205"
         tools:layout_editor_absoluteX="0dp" />
@@ -55,7 +55,7 @@
         tools:layout_editor_absoluteX="0dp" />
 
     <TextView
-        android:id="@+id/etiquetaCapacidad"
+        android:id="@+id/tvCriticalCapacity"
         android:layout_width="178dp"
         android:layout_height="54dp"
         android:layout_marginBottom="316dp"
@@ -67,11 +67,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.068"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etiquetaPeso"
+        app:layout_constraintTop_toBottomOf="@+id/tvWeightLimit"
         app:layout_constraintVertical_bias="1.0" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/tvAdminSettingsTitle"
         android:layout_width="225dp"
         android:layout_height="92dp"
         android:gravity="center"
@@ -86,7 +86,7 @@
         app:layout_constraintVertical_bias="0.297" />
 
     <TextView
-        android:id="@+id/etiquetaPeso"
+        android:id="@+id/tvWeightLimit"
         android:layout_width="162dp"
         android:layout_height="49dp"
         android:layout_marginBottom="376dp"
@@ -98,10 +98,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.064"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+        app:layout_constraintTop_toBottomOf="@+id/tvAdminSettingsTitle" />
 
     <EditText
-        android:id="@+id/limitePeso"
+        android:id="@+id/txtWeightLimit"
         android:layout_width="137dp"
         android:layout_height="49dp"
         android:layout_marginEnd="52dp"
@@ -110,11 +110,11 @@
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2"
+        app:layout_constraintTop_toBottomOf="@+id/tvAdminSettingsTitle"
         app:layout_constraintVertical_bias="0.03" />
 
     <EditText
-        android:id="@+id/limiteCapacidad"
+        android:id="@+id/txtCriticalCapacity"
         android:layout_width="146dp"
         android:layout_height="47dp"
         android:layout_marginTop="24dp"
@@ -124,10 +124,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.837"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/limitePeso" />
+        app:layout_constraintTop_toBottomOf="@+id/txtWeightLimit" />
 
     <Button
-        android:id="@+id/botonGrabar"
+        android:id="@+id/btnSendSettings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="104dp"
@@ -148,7 +148,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2"
+        app:layout_constraintTop_toBottomOf="@+id/tvAdminSettingsTitle"
         app:layout_constraintVertical_bias="0.934" />
 
     <EditText
@@ -162,6 +162,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.837"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/limiteCapacidad" />
+        app:layout_constraintTop_toBottomOf="@+id/txtCriticalCapacity" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

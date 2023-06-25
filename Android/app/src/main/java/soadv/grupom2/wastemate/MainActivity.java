@@ -44,21 +44,7 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
     //region Attributes
     private BluetoothService myService;
-    private boolean isBound = false;
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder binder) {
-            BluetoothService.LocalBinder localBinder = (BluetoothService.LocalBinder) binder;
-            myService = localBinder.getService();
-            isBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            isBound = false;
-        }
-    };
     private Button botonCapacidad;
     private ImageButton botonConfiguracion;
 
@@ -105,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int rojo = Color.RED;
     private static final int azul = Color.BLUE;
     private static final int verde = Color.GREEN;
+    private BroadcastReceiver broadcastReceiver;
 
     //endregion
 
@@ -177,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 //showToast("Voy a mandar un pedido para ver capacidad al arduino");
                 Log.i("Envio","Mando al arduino solicitud para ver la capacidad");
                 String data = "{\"c\":0,\"d\":{\"mw\":999,\"md\":99,\"cd\":888}}";
-                BluetoothManager.getService().sendData(data);
+                BluetoothService.getInstance().sendData(data);
             }
         });
 
@@ -209,7 +196,23 @@ public class MainActivity extends AppCompatActivity {
         disableBluetoothActivityLauncher= registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 (result) -> disableBluetoothCallback());
-        BluetoothManager.bindService(this);
+
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        startService(serviceIntent);
+
+        // Register the broadcast receiver to receive messages from the service
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String message = intent.getStringExtra("message");
+                Log.d(BluetoothService.TAG, "Received message: " + message);
+            }
+        };
+        IntentFilter filter = new IntentFilter("com.example.MY_ACTION");
+        registerReceiver(broadcastReceiver, filter);
+
+        // Access the singleton instance of the service
+        myService = BluetoothService.getInstance();
 
     }
 
@@ -314,8 +317,9 @@ public class MainActivity extends AppCompatActivity {
     //recibe mas broadcast del SO. del bluethoot
     public void onDestroy()
     {
-        BluetoothManager.stopService(this);
         super.onDestroy();
+        Intent serviceIntent = new Intent(this, BluetoothService.class);
+        stopService(serviceIntent);
     }
 
     protected  void enableComponent()
