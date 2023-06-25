@@ -13,6 +13,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -54,6 +55,19 @@ public class MainActivity extends AppCompatActivity{
         public void onServiceConnected(ComponentName className, IBinder binder) {
             BluetoothService.LocalBinder localBinder = (BluetoothService.LocalBinder) binder;
             myService = localBinder.getService();
+            if(!myService.getAdapter().isEnabled()){
+                Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
+                btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(btintent);
+            }
+            //get SharedPreferences from getSharedPreferences("name_file", MODE_PRIVATE)
+            SharedPreferences shared = getSharedPreferences("info",MODE_PRIVATE);
+            //Using getXXX- with XX is type date you wrote to file "name_file"
+            String string_temp = shared.getString("connectedDevice", null);
+            if(string_temp!= null){
+                BluetoothDevice device = myService.getAdapter().getRemoteDevice(string_temp);
+                myService.connectToDevice(device);
+            }
             isBound = true;
         }
 
@@ -94,6 +108,23 @@ public class MainActivity extends AppCompatActivity{
     private static final int CAPACIDAD_MINIMA_POSICION = 2;
 
     private BroadcastReceiver broadcastReceiver;
+    private BroadcastReceiver bluetoothStatusChangedBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action != null && action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                if (state == BluetoothAdapter.STATE_ON) {
+                    // Bluetooth is enabled
+                } else if (state == BluetoothAdapter.STATE_OFF) {
+                    Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
+                    btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(btintent);
+                }
+            } // Handle Bluetooth state change
+        }
+    };
+    private IntentFilter bluetoothStatusChangedFilter;
 
     //endregion
 
@@ -160,6 +191,14 @@ public class MainActivity extends AppCompatActivity{
         botonCapacidad.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //Create a object SharedPreferences from getSharedPreferences("name_file",MODE_PRIVATE) of Context
+                pref = getSharedPreferences("info", MODE_PRIVATE);
+                //Using putXXX - with XXX is type data you want to write like: putString, putInt...   from      Editor object
+
+                SharedPreferences.Editor editor = pref.edit();
+                editor.putString("connectedDevice",myService.getDevice().getAddress());
+                //finally, when you are done saving the values, call the commit() method.
+                editor.commit();
                 //showToast("Voy a mandar un pedido para ver capacidad al arduino");
                 Log.i("Envio","Mando al arduino solicitud para ver la capacidad");
                 BluetoothMessage bluetoothMessage = new BluetoothMessage(0);
@@ -182,7 +221,9 @@ public class MainActivity extends AppCompatActivity{
                 (result) -> disableBluetoothCallback());
 
         Intent serviceIntent = new Intent(this, BluetoothService.class);
-        startService(serviceIntent);
+        bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+
+        //startService(serviceIntent);
 
         // Register the broadcast receiver to receive messages from the service
         broadcastReceiver = new BroadcastReceiver() {
@@ -211,6 +252,9 @@ public class MainActivity extends AppCompatActivity{
 
         IntentFilter filter = new IntentFilter(Actions.CUSTOM_ACTION_STATUS_CHANGED);
         registerReceiver(broadcastReceiver, filter);
+
+        bluetoothStatusChangedFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(bluetoothStatusChangedBroadcastReceiver, bluetoothStatusChangedFilter);
 
         // Access the singleton instance of the service
         myService = BluetoothService.getInstance();
@@ -243,7 +287,6 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-
     @Override
     //Cada vez que se detecta el evento OnResume se establece la comunicacion con el HC05, creando un
     //socketBluethoot
@@ -251,7 +294,15 @@ public class MainActivity extends AppCompatActivity{
     {
         Log.i("Ejecuto","Ejecuto OnResume");
         super.onResume();
-
+        registerReceiver(bluetoothStatusChangedBroadcastReceiver, bluetoothStatusChangedFilter);
+        BluetoothService bt = BluetoothService.getInstance();
+        if(myService != null){
+            if(!myService.getAdapter().isEnabled()){
+                Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
+                btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(btintent);
+            }
+        }
 //
 //        //Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
 //        Intent intent=getIntent();
@@ -331,6 +382,7 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onStop() {
         super.onStop();
+        unregisterReceiver(bluetoothStatusChangedBroadcastReceiver);
         Log.i("Ejecuto","Ejecuto OnStop");
     }
 
@@ -339,6 +391,7 @@ public class MainActivity extends AppCompatActivity{
         super.onRestart();
         Log.i("Ejecuto","Ejecuto OnRestart");
     }
+    private SharedPreferences pref;
 
     @Override
     //Cuando se detruye la Acivity se quita el registro de los brodcast. Apartir de este momento no se
@@ -349,7 +402,8 @@ public class MainActivity extends AppCompatActivity{
 
         super.onDestroy();
         Intent serviceIntent = new Intent(this, BluetoothService.class);
-        stopService(serviceIntent);
+        unbindService(serviceConnection);
+        //stopService(serviceIntent);
     }
 
     protected  void enableComponent()

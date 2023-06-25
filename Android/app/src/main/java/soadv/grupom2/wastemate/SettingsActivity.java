@@ -1,5 +1,7 @@
 package soadv.grupom2.wastemate;
 
+import static android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -132,10 +134,15 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private BroadcastReceiver bluetoothDeviceConnectedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            int index = pairedDevices.indexOf(device);
-            DeviceListAdapter.ViewHolder vh = (DeviceListAdapter.ViewHolder) pairedDevicesListView.findViewHolderForAdapterPosition(index);
-        vh.vw.setBackgroundColor(Color.parseColor("#FF6200EE"));
+            if(intent.getAction() == ACTION_ACL_DISCONNECTED){
+
+            }else{
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                int index = pairedDevices.indexOf(device);
+                DeviceListAdapter.ViewHolder vh = (DeviceListAdapter.ViewHolder) pairedDevicesListView.findViewHolderForAdapterPosition(index);
+                vh.vw.setBackgroundColor(Color.parseColor("#FF6200EE"));
+            }
+
         }
     };
     private View.OnClickListener btnSendSettingsOnClickListener = new View.OnClickListener() {
@@ -271,8 +278,15 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
         IntentFilter deviceConnected = new IntentFilter();
         deviceConnected.addAction(BluetoothDevice.ACTION_ACL_CONNECTED); //cuando la busqueda de bluethoot finaliza
-        //se define (registra) el handler que captura los broadcast anterirmente mencionados.
+        deviceConnected.addAction(ACTION_ACL_DISCONNECTED); //cuando la busqueda de bluethoot finaliza
+
+//se define (registra) el handler que captura los broadcast anterirmente mencionados.
         registerReceiver(bluetoothDeviceConnectedReceiver, deviceConnected);
+        BluetoothService service = BluetoothService.getInstance();
+//        if(service!= null){
+//            int index = pairedDevices.indexOf(service.getDevice());
+//            DeviceListAdapter.ViewHolder vh = (DeviceListAdapter.ViewHolder) pairedDevicesListView.findViewHolderForAdapterPosition(index);
+//            vh.vw.setBackgroundColor(Color.parseColor("#FF6200EE"));        }
 
         bluetoothService.getAdapter().startDiscovery();
     }

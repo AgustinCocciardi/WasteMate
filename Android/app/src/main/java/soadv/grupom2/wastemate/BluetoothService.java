@@ -27,6 +27,7 @@ public class BluetoothService extends Service {
 
     public static final String TAG = "MyService";
 
+    private final IBinder binder = new LocalBinder();
     public static BluetoothService getInstance() {
         return instance;
     }
@@ -43,10 +44,9 @@ public class BluetoothService extends Service {
         return START_STICKY;
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
 
     @Override
@@ -55,6 +55,7 @@ public class BluetoothService extends Service {
         disconnect();
     }
 
+    public BluetoothDevice getDevice(){return connectThread.getDevice();}
     public BluetoothAdapter getAdapter() {
         return  bluetoothAdapter;
     }
@@ -168,6 +169,10 @@ public class BluetoothService extends Service {
                     closeException.printStackTrace();
                 }
             }
+        }
+
+        public BluetoothDevice getDevice() {
+            return device;
         }
     }
 }
