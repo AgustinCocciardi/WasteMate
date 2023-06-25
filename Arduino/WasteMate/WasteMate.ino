@@ -432,27 +432,27 @@ void close()
 //Deshabilita el contenedor y notifica que se necesita mantenimiento
 void disable()
 {
-  send_notification(MESSAGE_MAINTENANCE_NEEDED); //TODO:: VER SI ES NECESARIO
+  //send_notification(MESSAGE_MAINTENANCE_NEEDED); //TODO:: VER SI ES NECESARIO
   close();
 }
 
 //Deshabilita el contenedor y notifica que se solicitó deshabilitarlo.
 void request_disabling()
 {
-  send_notification(MESSAGE_REQUEST_DISABLING); //TODO: VER SI ES NECESARIO
+  //send_notification(MESSAGE_REQUEST_DISABLING); //TODO: VER SI ES NECESARIO
   disable();
 }
 
 //Notifica que se inició el mantenimiento del contenedor.
 void send_maintenance()
 {
-  send_notification(MESSAGE_MAINTENANCE); //TODO: VER SI ES NECESARIO.
+  //send_notification(MESSAGE_MAINTENANCE); //TODO: VER SI ES NECESARIO.
 }
 
 //Reinicia el sistema al estado inicial.
 void reset()
 {
-  send_notification(MESSAGE_MAINTENANCE_FINISHED); //TODO: VER SI ES NECESARIO.
+  //send_notification(MESSAGE_MAINTENANCE_FINISHED); //TODO: VER SI ES NECESARIO.
   initialize();
   close();
 }
