@@ -5,14 +5,14 @@ import com.google.gson.annotations.SerializedName;
 public class BluetoothData {
     @SerializedName(value ="mw")
     int maximumWeight;
-    @SerializedName(value ="md")
-    int minimumDistance;
-    @SerializedName(value ="cd")
-    int criticalDistance;
+    @SerializedName(value ="fp")
+    double fullPercentage;
+    @SerializedName(value ="cp")
+    double criticalPercentage;
 
-    public BluetoothData(int maximumWeight, int minimumDistance, int criticalDistance) {
+    public BluetoothData(int maximumWeight, double fullPercentage, double criticalPercentage) {
         this.maximumWeight = maximumWeight;
-        this.minimumDistance = minimumDistance;
-        this.criticalDistance = criticalDistance;
+        this.fullPercentage = fullPercentage;
+        this.criticalPercentage = criticalPercentage;
     }
 }

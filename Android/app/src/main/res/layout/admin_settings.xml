@@ -11,102 +11,97 @@
         tools:context=".Sensores">
 
         <TextView
-            android:id="@+id/tvAdminSettingsTitle"
-            android:layout_width="225dp"
-            android:layout_height="92dp"
-            android:gravity="center"
-            android:text="WasteMate"
-            android:textAlignment="center"
-            android:textSize="34sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.082" />
-
-        <TextView
-            android:id="@+id/tvWeightLimit"
-            android:layout_width="162dp"
-            android:layout_height="49dp"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="72dp"
-            android:autoText="false"
-            android:text="Limite Peso"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvAdminSettingsTitle" />
-
-        <TextView
-            android:id="@+id/tvCriticalCapacity"
-            android:layout_width="178dp"
-            android:layout_height="54dp"
-            android:layout_marginTop="36dp"
-            android:autoText="false"
-            android:text="Limite Capacidad Critica"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            app:layout_constraintStart_toStartOf="@+id/tvWeightLimit"
-            app:layout_constraintTop_toBottomOf="@+id/tvWeightLimit" />
-
-        <TextView
-            android:id="@+id/tvMinimumDistance"
-            android:layout_width="178dp"
-            android:layout_height="54dp"
-            android:layout_marginTop="28dp"
-            android:autoText="false"
-            android:text="Limite Distancia Minima"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            app:layout_constraintStart_toStartOf="@+id/tvCriticalCapacity"
-            app:layout_constraintTop_toBottomOf="@+id/tvCriticalCapacity" />
-
-        <EditText
-            android:id="@+id/txtWeightLimit"
-            android:layout_width="147dp"
+            android:id="@+id/label_weight_limit"
+            android:layout_width="160dp"
             android:layout_height="50dp"
-            android:layout_marginTop="72dp"
+            android:layout_marginStart="32dp"
+            android:text="@string/label_weight_limit_header_text"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/txt_weight_limit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/txt_weight_limit" />
+
+        <TextView
+            android:id="@+id/label_critical_percentage"
+            android:layout_width="160dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="32dp"
+            android:text="@string/label_critical_capacity_header_text"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/txt_critical_percentage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/txt_critical_percentage" />
+
+        <TextView
+            android:id="@+id/label_full_percentage"
+            android:layout_width="160dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="32dp"
+            android:text="@string/label_minimum_distance_header_text"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/txt_full_percentage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/txt_full_percentage" />
+
+        <EditText
+            android:id="@+id/txt_weight_limit"
+            android:layout_width="160dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="180dp"
             android:layout_marginEnd="32dp"
             android:ems="10"
+            android:hint="@string/txt_weight_limit_hint"
             android:inputType="numberDecimal"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvAdminSettingsTitle" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:importantForAutofill="no" />
 
         <EditText
-            android:id="@+id/txtCriticalCapacity"
-            android:layout_width="146dp"
-            android:layout_height="47dp"
+            android:id="@+id/txt_critical_percentage"
+            android:layout_width="160dp"
+            android:hint="@string/txt_critical_capacity_hint"
+            android:layout_height="50dp"
             android:layout_marginTop="36dp"
             android:layout_marginEnd="32dp"
             android:ems="10"
             android:inputType="numberDecimal"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txtWeightLimit" />
+            app:layout_constraintTop_toBottomOf="@+id/txt_weight_limit"
+            android:importantForAutofill="no" />
 
         <Button
-            android:id="@+id/btnSendSettings"
+            android:id="@+id/button_send_settings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="49dp"
-            android:text="Enviar"
+            android:text="@string/button_send_text"
+            android:theme="@style/ButtonStyle"
+            android:background="@color/purple_700"
+            android:drawableTint="@color/white"
+            android:padding="10dp"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvMinimumDistance" />
+            app:layout_constraintTop_toBottomOf="@+id/label_full_percentage" />
 
         <EditText
-            android:id="@+id/txtMinimumDistance"
-            android:layout_width="146dp"
-            android:layout_height="47dp"
+            android:id="@+id/txt_full_percentage"
+            android:layout_width="160dp"
+            android:hint="@string/txt_full_percentage_hint"
+            android:layout_height="50dp"
             android:layout_marginTop="36dp"
             android:layout_marginEnd="32dp"
             android:ems="10"
             android:inputType="numberDecimal"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txtCriticalCapacity" />
+            app:layout_constraintTop_toBottomOf="@+id/txt_critical_percentage"
+            android:importantForAutofill="no" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

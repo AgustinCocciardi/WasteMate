@@ -1,3 +1,30 @@
 <resources>
     <string name="app_name">WasteMate</string>
+    <string name="label_paired_devices_header_text">Dispositivos Vinculados</string>
+    <string name="label_available_devices_header_text">Dispositivos Disponibles</string>
+    <string name="label_shake_device">Sacuda el dispositivo para configurar Limites de Capacidad y Peso</string>
+    <string name="label_bluetooth_required_text">Se requiere Bluetooth</string>
+    <string name="label_activate_bluetooth">No es posible conectarse al dispositivo sin Bluetooth. \nPor favor, actívelo para continuar</string>
+    <string name="button_activate_bluetooth_text">Activar</string>
+    <string name="bluetooth_icon_content_description">Icono de Bluetooth</string>
+    <string name="configuration_button_content_description">Icono de configuracion</string>
+    <string name="button_disable_text">Deshabilitar contenedor</string>
+    <string name="button_start_maintenance_text">Iniciar mantenimiento</string>
+    <string name="button_complete_maintenance_text">Finalizar mantinimiento</string>
+    <string name="label_status_header_text">Estado:</string>
+    <string name="label_current_percentage_header_text">Porcentaje Lleno:</string>
+    <string name="label_connected_device_header_text">Dispositivo conectado:</string>
+    <string name="button_refresh_status_content_description">Boton refrescar</string>
+    <string name="label_grant_permissions_text">Conceda los siguientes permisos para el correcto funcionamiento de la aplicación</string>
+    <string name="button_open_configuration_text">Abrir configuracion</string>
+    <string name="toolbar_button_back_content_description">Boton atras</string>
+    <string name="label_weight_limit_header_text">Peso Limite</string>
+    <string name="label_critical_capacity_header_text">Porcentaje Capacidad Critica</string>
+    <string name="label_minimum_distance_header_text">Porcentaje Sin Capacidad</string>
+    <string name="button_send_text">Enviar</string>
+    <string name="txt_weight_limit_hint">3</string>
+    <string name="txt_critical_capacity_hint">50</string>
+    <string name="txt_full_percentage_hint">80</string>
+    <string name="label_device_address_text">AA:32:AA:21</string>
+    <string name="label_device_name_text">Galaxy Nexus</string>
 </resources>

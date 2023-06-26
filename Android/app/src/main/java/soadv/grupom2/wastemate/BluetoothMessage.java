@@ -11,9 +11,9 @@ public class BluetoothMessage {
     @SerializedName(value ="d")
     BluetoothData data;
 
-    public BluetoothMessage(int code, int maximumWeight, int minimumDistance, int criticalDistance) {
+    public BluetoothMessage(int code, int maximumWeight, double fullPercentage, double criticalPercentage) {
         this.code = code;
-        this.data = new BluetoothData(maximumWeight,minimumDistance,criticalDistance);
+        this.data = new BluetoothData(maximumWeight,fullPercentage,criticalPercentage);
     }
 
     public BluetoothMessage(int code) {

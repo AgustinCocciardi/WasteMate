@@ -16,7 +16,7 @@
         app:layout_constraintBottom_toTopOf="@+id/space"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch1"
+        app:layout_constraintTop_toTopOf="parent"
         tools:context=".DeviceListActivity">
 
         <LinearLayout
@@ -25,14 +25,15 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView9"
+                android:id="@+id/label_paired_devices_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:text="Dispositivos Vinculados" />
+                android:layout_marginStart="10dp"
+                android:textSize="16sp"
+                android:text="@string/label_paired_devices_header_text" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/table_paired"
+                android:id="@+id/recycler_view_paired"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
@@ -42,14 +43,15 @@
                 android:layout_height="27dp" />
 
             <TextView
-                android:id="@+id/textView10"
+                android:id="@+id/label_available_devices_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:text="Dispositivos Disponibles" />
+                android:layout_marginStart="10dp"
+                android:textSize="16sp"
+                android:text="@string/label_available_devices_header_text" />
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/table_available"
+                android:id="@+id/recycler_view_available"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
@@ -61,48 +63,24 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <TextView
-        android:id="@+id/bluetoothTextView"
-        android:layout_width="159dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="29dp"
-        android:layout_marginTop="48dp"
-        android:text="Bluetooth"
-
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <soadv.grupom2.wastemate.BluetoothSwitchCompat
-        android:id="@+id/switch1"
-        android:layout_width="72dp"
-        android:layout_height="57dp"
-        android:layout_marginEnd="32dp"
-        android:text="Off"
-        android:theme="@style/Switch.control"
-        app:layout_constraintBottom_toBottomOf="@+id/bluetoothTextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/bluetoothTextView"
-        app:switchTextOff="Off"
-        app:switchTextOn="On" />
-
     <Space
         android:id="@+id/space"
-        android:layout_width="365dp"
-        android:layout_height="25dp"
+        android:layout_width="0dp"
+        android:layout_height="26dp"
         android:layout_marginBottom="24dp"
-        app:layout_constraintBottom_toTopOf="@+id/etiquetaShake3"
+        app:layout_constraintBottom_toTopOf="@+id/label_shake"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/etiquetaShake3"
+        android:id="@+id/label_shake"
         android:layout_width="301dp"
         android:layout_height="45dp"
         android:layout_marginStart="30dp"
         android:layout_marginEnd="29dp"
         android:layout_marginBottom="8dp"
-        android:text="Sacuda el dispositivo para configurar Limites de Capacidad y Peso"
+        android:text="@string/label_shake_device"
         android:textAlignment="center"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"

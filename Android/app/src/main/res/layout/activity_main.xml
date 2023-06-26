@@ -5,98 +5,180 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="200dp"
-        android:layout_height="83dp"
-        android:gravity="center"
-        android:text="WasteMate"
-        android:textAlignment="center"
-        android:textSize="34sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <!-- AppBar layout for using Toolbar as AppBar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.103" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/botonCapacidad"
-        android:layout_width="62dp"
-        android:layout_height="53dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginTop="117dp"
-        android:layout_marginEnd="33dp"
-        android:textSize="24sp"
-        app:icon="@drawable/baseline_refresh_24"
-        app:iconGravity="textTop"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/capacidadText"
-        app:layout_constraintTop_toBottomOf="@+id/btnDisable" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- ToolBar widget -->
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/purple_500"
+                android:minHeight="?attr/actionBarSize"
+                android:theme="?attr/actionBarTheme"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:title="WasteMate"
+                app:titleTextColor="@color/white" />
+
+
+            <!-- Right most ImageView -->
+
+            <!-- ImageView beside title of ToolBar -->
+
+            <ImageView
+                android:id="@+id/button_settings"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/baseline_settings_24"
+                android:backgroundTint="#FFFFFF"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/toolbar"
+                app:layout_constraintTop_toTopOf="parent"
+                android:contentDescription="@string/configuration_button_content_description" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
 
     <ImageButton
-        android:id="@+id/botonConfiguracion"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
-        app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@mipmap/config50" />
+        android:id="@+id/button_refresh_status"
+        android:layout_width="41dp"
+        android:layout_height="41dp"
+        android:layout_marginStart="8dp"
+
+        android:background="@drawable/baseline_refresh_24"
+        app:layout_constraintBottom_toBottomOf="@+id/label_status_description"
+        app:layout_constraintStart_toEndOf="@+id/label_status_description"
+        app:layout_constraintTop_toTopOf="@+id/label_status_description"
+        android:contentDescription="@string/button_refresh_status_content_description" />
 
     <TextView
-        android:id="@+id/capacidadText"
-        android:layout_width="240dp"
-        android:layout_height="54dp"
-        android:layout_marginStart="52dp"
-        android:layout_marginTop="340dp"
-        android:text="Estado"
-        android:textAlignment="center"
+        android:id="@+id/label_status_description"
+        android:layout_width="237dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="100dp"
+        android:text=""
+        android:textAlignment="textStart"
         android:textSize="20sp"
-        app:layout_constraintEnd_toStartOf="@+id/botonCapacidad"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintStart_toEndOf="@+id/label_status_header"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 
     <Button
-        android:id="@+id/btnIniciarMantenimiento"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="156dp"
-        android:layout_marginTop="31dp"
-        android:layout_marginEnd="161dp"
-        android:layout_marginBottom="16dp"
-        android:text="Iniciar mantenimiento"
-        app:layout_constraintBottom_toTopOf="@+id/btnMantenimientoFinalizado"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        android:id="@+id/button_start_maintenance"
+        android:layout_width="180dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="272dp"
+        android:drawableStart="@drawable/baseline_cleaning_services_24"
+        android:theme="@style/ButtonStyle"
+        android:background="@color/purple_700"
+        android:drawableTint="@color/white"
+        android:padding="10dp"
+        android:text="@string/button_start_maintenance_text"
+
+        app:layout_constraintEnd_toEndOf="@+id/label_current_percentage_header2"
+        app:layout_constraintStart_toStartOf="@+id/label_current_percentage_header"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 
     <Button
-        android:id="@+id/btnDisable"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="156dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="161dp"
-        android:text="Deshabilitar contenedor"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnMantenimientoFinalizado" />
+        android:id="@+id/button_disable"
+        android:layout_width="180dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="40dp"
+        android:background="@color/purple_700"
+        android:drawableStart="@drawable/baseline_disabled_by_default_24"
+        android:drawableTint="@color/white"
+        android:padding="10dp"
+        android:text="@string/button_disable_text"
+        android:theme="@style/ButtonStyle"
+        app:layout_constraintEnd_toEndOf="@+id/button_complete_maintenance"
+        app:layout_constraintHorizontal_bias="0.755"
+        app:layout_constraintStart_toStartOf="@+id/button_complete_maintenance"
+        app:layout_constraintTop_toBottomOf="@+id/button_complete_maintenance" />
 
     <Button
-        android:id="@+id/btnMantenimientoFinalizado"
+        android:id="@+id/button_complete_maintenance"
+        android:layout_width="180dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="40dp"
+        android:background="@color/purple_700"
+        android:drawableStart="@drawable/baseline_done_24"
+        android:drawableTint="@color/white"
+        android:padding="10dp"
+        android:text="@string/button_complete_maintenance_text"
+        android:theme="@style/ButtonStyle"
+        app:layout_constraintEnd_toEndOf="@+id/button_start_maintenance"
+        app:layout_constraintHorizontal_bias="0.557"
+        app:layout_constraintStart_toStartOf="@+id/button_start_maintenance"
+        app:layout_constraintTop_toBottomOf="@+id/button_start_maintenance" />
+
+    <TextView
+        android:id="@+id/label_status_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="156dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="161dp"
-        android:layout_marginBottom="16dp"
-        android:text="Finalizar mantinimiento"
-        app:layout_constraintBottom_toTopOf="@+id/btnDisable"
+        android:text="@string/label_status_header_text"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/label_status_description"
+        app:layout_constraintStart_toStartOf="@+id/label_connected_device_header"
+        app:layout_constraintTop_toTopOf="@+id/label_status_description"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/label_current_percentage_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="164dp"
+        android:text="@string/label_current_percentage_header_text"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="@+id/label_status_header"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/label_status_header"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+
+    <TextView
+        android:id="@+id/label_current_percentage_header2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="32dp"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/label_current_percentage_header"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/label_current_percentage_header"
+        app:layout_constraintTop_toTopOf="@+id/label_current_percentage_header" />
+
+    <TextView
+        android:id="@+id/label_connected_device_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="29dp"
+        android:text="@string/label_connected_device_header_text"
+        android:textSize="15sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnIniciarMantenimiento" />
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+
+    <TextView
+        android:id="@+id/label_connected_device_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="@+id/label_connected_device_header"
+        app:layout_constraintStart_toEndOf="@+id/label_connected_device_header"
+        app:layout_constraintTop_toTopOf="@+id/label_connected_device_header" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

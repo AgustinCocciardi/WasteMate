@@ -12,10 +12,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class BluetoothDisabledActivity extends AppCompatActivity {
-    private Button btnEnableBluetooth;
     ActivityResultLauncher<Intent> enableBluetoothActivityLauncher;
 
-    private View.OnClickListener btnEnableBluetoothOnClickListener = new View.OnClickListener() {
+    private final View.OnClickListener btnEnableBluetoothOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE");
@@ -24,11 +23,17 @@ public class BluetoothDisabledActivity extends AppCompatActivity {
     };
 
     @Override
+    public void onBackPressed(){
+        finishAffinity();
+        finish();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth_disabled);
 
-        btnEnableBluetooth = (Button)findViewById(R.id.btnActivarBluetoothNuevo);
+        Button btnEnableBluetooth = findViewById(R.id.button_activate_bluetooth);
         enableBluetoothActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 (result) -> enableBluetoothCallback(result));
