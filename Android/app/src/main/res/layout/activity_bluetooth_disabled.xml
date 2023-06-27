@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/image_view_bluetooth_icon"
+        android:layout_width="112dp"
+        android:layout_height="95dp"
+        android:layout_marginStart="150dp"
+        android:layout_marginTop="88dp"
+        android:layout_marginEnd="150dp"
+        android:background="@drawable/baseline_bluetooth_24"
+        android:backgroundTint="@color/purple_700"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/bluetooth_icon_content_description" />
+
+    <TextView
+        android:id="@+id/label_bluetooth_required"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="57dp"
+        android:text="@string/label_bluetooth_required_text"
+        app:layout_constraintEnd_toEndOf="@+id/image_view_bluetooth_icon"
+        app:layout_constraintStart_toStartOf="@+id/image_view_bluetooth_icon"
+        app:layout_constraintTop_toBottomOf="@+id/image_view_bluetooth_icon" />
+
+    <TextView
+        android:id="@+id/label_bluetooth_required_description"
+        android:layout_width="207dp"
+        android:layout_height="90dp"
+        android:layout_marginTop="32dp"
+        android:gravity="center"
+        android:text="@string/label_activate_bluetooth"
+        app:layout_constraintEnd_toEndOf="@+id/label_bluetooth_required"
+        app:layout_constraintStart_toStartOf="@+id/label_bluetooth_required"
+        app:layout_constraintTop_toBottomOf="@+id/label_bluetooth_required" />
+
+    <Button
+        android:id="@+id/button_activate_bluetooth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:background="@color/purple_500"
+        android:text="@string/button_activate_bluetooth_text"
+        android:theme="@style/ButtonStyle"
+        app:layout_constraintEnd_toEndOf="@+id/label_bluetooth_required_description"
+        app:layout_constraintStart_toStartOf="@+id/label_bluetooth_required_description"
+        app:layout_constraintTop_toBottomOf="@+id/label_bluetooth_required_description" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="-17dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="-9dp" />
+</androidx.constraintlayout.widget.ConstraintLayout>
