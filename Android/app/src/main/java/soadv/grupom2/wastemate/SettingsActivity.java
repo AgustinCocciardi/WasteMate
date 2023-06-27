@@ -61,10 +61,12 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private static final float PRECISION_CHANGE = 20;
     private IntentFilter bluetoothStatusChangedFilter;
 
+    private  CustomProgressDialog customProgressDialog;
+
     private final OnMessageReceivedListener onDeviceUnSupportedListener = new OnMessageReceivedListener() {
         @Override
         public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response) {
-            // Toast.makeText(getApplicationContext(), "UNSUPPORTED", Toast.LENGTH_SHORT);
+            customProgressDialog.dismiss();
         }
     };
     private final OnMessageReceivedListener onAckMessageReceivedListener = new OnMessageReceivedListener() {
@@ -88,6 +90,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                 editor.apply();
                 viewHolder.setConnectedIndicatorColor(getResources().getColor(R.color.purple_500, getTheme()));
             }
+            customProgressDialog.dismiss();
         }
     };
     //endregion
@@ -127,6 +130,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         // using toolbar as ActionBar
         setSupportActionBar(toolbar);
 
+        customProgressDialog = new CustomProgressDialog(SettingsActivity.this);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -207,6 +211,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                 startActivity(btintent);
             }
         }
+
         registerReceiver(bluetoothStatusChangedBroadcastReceiver, bluetoothStatusChangedFilter);
 
         bluetoothService.setOnDeviceUnsupportedListener(onDeviceUnSupportedListener);
@@ -301,6 +306,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         @Override
         public void onClick(int position, BluetoothDevice device) {
             try{
+                customProgressDialog.show();
                 if (bluetoothService != null)
                 {
                     if(bluetoothService.isDeviceConnected(device))
@@ -314,6 +320,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                 }
             }
             catch (SecurityException e){
+                customProgressDialog.dismiss();
                 //TODO: SEND TO PERMISSIONS SCREEN
                 //android.permission.BLUETOOTH_CONNECT
             }
@@ -414,6 +421,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                 viewHolder.setConnectedIndicatorColor(getResources().getColor(R.color.grey, getTheme()));
             }
         }
+        customProgressDialog.dismiss();
     }
     //endregion
 

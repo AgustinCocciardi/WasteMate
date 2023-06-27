@@ -2,6 +2,7 @@ package soadv.grupom2.wastemate;
 
 import android.bluetooth.BluetoothDevice;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,10 @@ public class PairedDeviceListAdapter extends BaseDeviceListAdapter<PairedDeviceL
     @Override
     public void onBindViewHolder(@NonNull PairedDeviceViewHolder holder, int position) {
         BluetoothDevice item = doOnBindViewHolder(holder, position);
+        if(BluetoothService.getInstance().isDeviceConnected(item))
+        {
+            holder.setConnectedIndicatorColor(Color.rgb(98,0,238));
+        }
         holder.btnUnpair.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

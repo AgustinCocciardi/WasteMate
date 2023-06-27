@@ -148,9 +148,15 @@ public class BluetoothService extends Service
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                if(onDeviceUnsupportedListener!= null){
+                    this.onDeviceUnsupportedListener.onMessageReceived(device, null);
+                }
             }
         } catch (IOException connectException) {
             connectException.printStackTrace();
+            if(onDeviceUnsupportedListener!= null){
+                this.onDeviceUnsupportedListener.onMessageReceived(device, null);
+            }
             try {
                 if (tmpSocket != null) {
                     tmpSocket.close();

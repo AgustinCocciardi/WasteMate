@@ -44,29 +44,8 @@ public class MainActivity extends AppCompatActivity{
     ArrayList<String> permissions;
     private TextView lblStatusDescription;
 
-    private final BroadcastReceiver bluetoothServiceBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String message = intent.getStringExtra("status");
-            lblStatusDescription.setText(message);
+    private TextView lblCurrentPercentage;
 
-            if (Objects.equals(message, "CON CAPACIDAD"))
-            {
-                lblStatusDescription.setTextColor(Color.GREEN);
-            }
-            else if(Objects.equals(message, "CAPACIDAD CRITICA"))
-            {
-                lblStatusDescription.setTextColor(Color.YELLOW);
-            }
-            else if(Objects.equals(message, "SIN CAPACIDAD"))
-            {
-                lblStatusDescription.setTextColor(Color.RED);
-            }
-            else  if(Objects.equals(message, "EN MANTENIMIENTO")){
-                lblStatusDescription.setTextColor(Color.BLUE);
-            }
-        }
-    };
     private final BroadcastReceiver bluetoothStatusChangedBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -86,10 +65,38 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onClick(View view)
         {
-            BluetoothMessage bluetoothMessage = new BluetoothMessage(5);
+            BluetoothMessage bluetoothMessage = new BluetoothMessage(4);
             BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
         }
     };
+
+    private final OnMessageReceivedListener onMessageReceivedListener = new OnMessageReceivedListener() {
+        @Override
+        public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response) {
+            updateLabels(response);
+        }
+    };
+
+    private void updateLabels(BluetoothMessageResponse response) {
+        lblStatusDescription.setText(response.data);
+        lblCurrentPercentage.setText(response.getCurrentPercentage()+"%");
+        if (Objects.equals(response.data, "CON CAPACIDAD"))
+        {
+            lblStatusDescription.setTextColor(Color.GREEN);
+        }
+        else if(Objects.equals(response.data, "CAPACIDAD CRITICA"))
+        {
+            lblStatusDescription.setTextColor(Color.YELLOW);
+        }
+        else if(Objects.equals(response.data, "SIN CAPACIDAD"))
+        {
+            lblStatusDescription.setTextColor(Color.RED);
+        }
+        else  if(Objects.equals(response.data, "EN MANTENIMIENTO")){
+            lblStatusDescription.setTextColor(Color.BLUE);
+        }
+    }
+
     private final View.OnClickListener btnSettingsOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -166,6 +173,7 @@ public class MainActivity extends AppCompatActivity{
         Button btnCompleteMaintenance = findViewById(R.id.button_complete_maintenance);
         Button btnDisable = findViewById(R.id.button_disable);
         lblStatusDescription = findViewById(R.id.label_status_description);
+        lblCurrentPercentage = findViewById(R.id.label_current_percentage_description);
         //endregion
 
         // using toolbar as ActionBar
@@ -186,7 +194,6 @@ public class MainActivity extends AppCompatActivity{
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
 
         IntentFilter filter = new IntentFilter(Actions.CUSTOM_ACTION_STATUS_CHANGED);
-        registerReceiver(bluetoothServiceBroadcastReceiver, filter);
 
         bluetoothStatusChangedFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(bluetoothStatusChangedBroadcastReceiver, bluetoothStatusChangedFilter);
@@ -276,9 +283,10 @@ public class MainActivity extends AppCompatActivity{
     private final OnMessageReceivedListener onUpdateMessageReceivedListener = new OnMessageReceivedListener() {
         @Override
         public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response) {
-            lblStatusDescription.setText(response.data);
+            updateLabels(response);
         }
     };
+
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder binder) {
@@ -290,9 +298,8 @@ public class MainActivity extends AppCompatActivity{
                 startActivity(btintent);
             }
             bluetoothService.setOnUpdateMessageReceivedListener(onUpdateMessageReceivedListener);
-            //get SharedPreferences from getSharedPreferences("name_file", MODE_PRIVATE)
+            bluetoothService.setOnAckMessageReceivedListener(onMessageReceivedListener);
             SharedPreferences shared = getSharedPreferences("info",MODE_PRIVATE);
-            //Using getXXX- with XX is type date you wrote to file "name_file"
             String string_temp = shared.getString("connectedDevice", null);
             if(string_temp!= null){
                 BluetoothDevice device = bluetoothService.getAdapter().getRemoteDevice(string_temp);

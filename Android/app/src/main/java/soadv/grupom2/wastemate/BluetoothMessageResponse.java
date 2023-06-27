@@ -17,11 +17,15 @@ public class BluetoothMessageResponse {
     @SerializedName("cs")
     int containerSize;
     @SerializedName("p")
-    double currentPercentage;
+    private double currentPercentage;
     public static  BluetoothMessageResponse fromJson(String serializedData)
     {
         Gson gson = new Gson();
         BluetoothMessageResponse response = gson.fromJson(serializedData, BluetoothMessageResponse.class);
         return  response;
+    }
+
+    public double getCurrentPercentage() {
+        return currentPercentage>0? currentPercentage*100:0;
     }
 }

@@ -89,7 +89,7 @@
         android:padding="10dp"
         android:text="@string/button_start_maintenance_text"
 
-        app:layout_constraintEnd_toEndOf="@+id/label_current_percentage_header2"
+        app:layout_constraintEnd_toEndOf="@+id/label_current_percentage_description"
         app:layout_constraintStart_toStartOf="@+id/label_current_percentage_header"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 
@@ -149,7 +149,7 @@
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
 
     <TextView
-        android:id="@+id/label_current_percentage_header2"
+        android:id="@+id/label_current_percentage_description"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
