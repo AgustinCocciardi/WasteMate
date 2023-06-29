@@ -5,7 +5,7 @@
     android:id="@+id/bluetoothDeviceItem"
     android:layout_width="match_parent"
     android:layout_height="60dp"
-    tools:context=".BaseDeviceListAdapter">
+    tools:context="com.grupom2.wastemate.adapter.BaseDeviceListAdapter">
 
     <View
         android:layout_width="match_parent"

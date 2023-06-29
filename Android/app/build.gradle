@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'soadv.grupom2.wastemate'
+    namespace 'com.grupom2.wastemate'
     compileSdk 33
 
     defaultConfig {
-        applicationId "soadv.grupom2.wastemate"
+        applicationId "com.grupom2.wastemate"
         minSdk 24
         targetSdk 33
         versionCode 1
