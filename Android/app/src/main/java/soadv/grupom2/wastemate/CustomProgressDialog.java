@@ -7,14 +7,17 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 
-public class CustomProgressDialog extends Dialog {
+public class CustomProgressDialog extends Dialog
+{
 
-    public CustomProgressDialog(@NonNull Context context) {
+    public CustomProgressDialog(@NonNull Context context)
+    {
         super(context);
         init();
     }
 
-    private void init() {
+    private void init()
+    {
         setContentView(R.layout.custom_dialog_progress);
         setCancelable(false); // Optional: Set whether the dialog can be canceled with the back button
 

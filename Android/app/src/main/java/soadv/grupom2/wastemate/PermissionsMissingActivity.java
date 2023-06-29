@@ -15,10 +15,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 
-public class PermissionsMissingActivity extends AppCompatActivity {
-    private final View.OnClickListener btnOpenConfigurationOnClickListener = new View.OnClickListener() {
+public class PermissionsMissingActivity extends AppCompatActivity
+{
+    private final View.OnClickListener btnOpenConfigurationOnClickListener = new View.OnClickListener()
+    {
         @Override
-        public void onClick(View v) {
+        public void onClick(View v)
+        {
             Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
             Uri uri = Uri.fromParts("package", getPackageName(), null);
             intent.setData(uri);
@@ -27,13 +30,15 @@ public class PermissionsMissingActivity extends AppCompatActivity {
     };
 
     @Override
-    public void onBackPressed(){
+    public void onBackPressed()
+    {
         finishAffinity();
         finish();
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
 
         //Se asigna un layout al activity para poder vincular los distintos componentes
@@ -54,12 +59,17 @@ public class PermissionsMissingActivity extends AppCompatActivity {
 
         PackageManager packageManager = getApplicationContext().getPackageManager();
 
-            ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);            for (String permission:permissionsDenied) {
+        ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        for (String permission : permissionsDenied)
+        {
             String permissionName;
-            try {
+            try
+            {
                 PermissionInfo permissionInfo = packageManager.getPermissionInfo(permission, 0);
                 permissionName = permissionInfo.loadLabel(packageManager).toString();
-            } catch (PackageManager.NameNotFoundException e) {
+            }
+            catch (PackageManager.NameNotFoundException e)
+            {
                 permissionName = permission;
             }
             itemsAdapter.add(permissionName);

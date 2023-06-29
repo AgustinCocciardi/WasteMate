@@ -618,7 +618,7 @@ void notify_state()
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_UPDATE_STATUS;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
-  doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
+  doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage; 
   serializeJson(doc, bluetooth_serial);
 }
 

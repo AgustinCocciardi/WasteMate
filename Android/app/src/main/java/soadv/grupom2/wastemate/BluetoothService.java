@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,11 +18,11 @@ import java.util.UUID;
 
 public class BluetoothService extends Service
 {
+    private static final int MAX_CONNECTION_ATTEMPTS = 10;
     private static BluetoothService instance;
+    private final IBinder binder = new LocalBinder();
     private BluetoothConnection bluetoothConnection;
     private BluetoothAdapter bluetoothAdapter;
-    private static final int MAX_CONNECTION_ATTEMPTS = 10;
-    private final IBinder binder = new LocalBinder();
     private boolean stop;
     private OnMessageReceivedListener onErrorMessageReceivedListener;
     private OnMessageReceivedListener onUpdateMessageReceivedListener;
@@ -46,12 +47,14 @@ public class BluetoothService extends Service
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(Intent intent, int flags, int startId)
+    {
         return START_STICKY;
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
+    public IBinder onBind(Intent intent)
+    {
         return binder;
     }
 
@@ -60,6 +63,7 @@ public class BluetoothService extends Service
     {
         disconnect();
     }
+
     //endregion
     public BluetoothDevice getDevice()
     {
@@ -68,11 +72,11 @@ public class BluetoothService extends Service
 
     public BluetoothAdapter getAdapter()
     {
-        if(bluetoothAdapter == null)
+        if (bluetoothAdapter == null)
         {
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         }
-        return  bluetoothAdapter;
+        return bluetoothAdapter;
     }
 
     public boolean isDeviceConnected(BluetoothDevice device)
@@ -82,7 +86,7 @@ public class BluetoothService extends Service
 
     public void connectToDevice(BluetoothDevice device)
     {
-        connectThread = new Thread(()->doConnect(device));
+        connectThread = new Thread(() -> doConnect(device));
         connectThread.start();
     }
 
@@ -96,23 +100,28 @@ public class BluetoothService extends Service
             tmpSocket.connect();
             InputStream tmpIn;
             OutputStream tmpOut;
-            try {
+            try
+            {
                 tmpIn = tmpSocket.getInputStream();
                 tmpOut = tmpSocket.getOutputStream();
 
                 boolean ack = false;
                 int connectionAttempts = 0;
-                doWrite(tmpOut,new BluetoothMessage(Constants.CODE_CONNECTION_REQUESTED).Serialize());
+                doWrite(tmpOut, new BluetoothMessage(Constants.CODE_CONNECTION_REQUESTED).Serialize());
                 int bytes;
                 byte[] buffer = new byte[256];
 
-                while (!ack && connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
-                    try {
-                        if (tmpIn.available() > 0) {
+                while (!ack && connectionAttempts < MAX_CONNECTION_ATTEMPTS)
+                {
+                    try
+                    {
+                        if (tmpIn.available() > 0)
+                        {
                             bytes = tmpIn.read(buffer);
                             String readMessage = new String(buffer, 0, bytes);
                             BluetoothMessageResponse response = BluetoothMessageResponse.fromJson(readMessage);
-                            if (response.code.equals(Constants.CODE_ACK)) {
+                            if (response.code.equals(Constants.CODE_ACK))
+                            {
                                 ack = true;
 
                                 this.bluetoothConnection = new BluetoothConnection();
@@ -124,93 +133,124 @@ public class BluetoothService extends Service
                                 receiveDataThread = new Thread(this::doReceive);
                                 receiveDataThread.start();
 
-                                if(onAckMessageReceivedListener!= null){
+                                if (onAckMessageReceivedListener != null)
+                                {
                                     onAckMessageReceivedListener.onMessageReceived(device, response);
                                 }
                             }
-                        } else {
+                        }
+                        else
+                        {
                             Thread.sleep(1000);
                         }
                         connectionAttempts++;
-                    } catch (IOException e) {
+                    }
+                    catch (IOException e)
+                    {
                         break;
-                    } catch (InterruptedException e) {
+                    }
+                    catch (InterruptedException e)
+                    {
                         throw new RuntimeException(e);
                     }
                 }
-                if (!ack) {
-                    if(onDeviceUnsupportedListener!= null){
+                if (!ack)
+                {
+                    if (onDeviceUnsupportedListener != null)
+                    {
                         this.onDeviceUnsupportedListener.onMessageReceived(device, null);
                     }
                     tmpIn.close();
                     tmpOut.close();
                     tmpSocket.close();
                 }
-            } catch (IOException e) {
+            }
+            catch (IOException e)
+            {
                 e.printStackTrace();
-                if(onDeviceUnsupportedListener!= null){
+                if (onDeviceUnsupportedListener != null)
+                {
                     this.onDeviceUnsupportedListener.onMessageReceived(device, null);
                 }
             }
-        } catch (IOException connectException) {
+        }
+        catch (IOException connectException)
+        {
             connectException.printStackTrace();
-            if(onDeviceUnsupportedListener!= null){
+            if (onDeviceUnsupportedListener != null)
+            {
                 this.onDeviceUnsupportedListener.onMessageReceived(device, null);
             }
-            try {
-                if (tmpSocket != null) {
+            try
+            {
+                if (tmpSocket != null)
+                {
                     tmpSocket.close();
                 }
-            } catch (IOException closeException) {
+            }
+            catch (IOException closeException)
+            {
                 closeException.printStackTrace();
             }
         }
-        catch (SecurityException securityException){
+        catch (SecurityException securityException)
+        {
             //TODO BLUETOOTH permission.
         }
     }
 
     private void doReceive()
     {
+        int bytes;
+        byte[] buffer = new byte[256];
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(bluetoothConnection.inputStream));
-        while (!stop)
+        while (true)
         {
             try
             {
-
-
-                if(bluetoothConnection.inputStream.available()>0)
+                if (bluetoothConnection.inputStream.available() > 0)
                 {
-                    String message = reader.readLine();
-                    BluetoothMessageResponse response =BluetoothMessageResponse.fromJson(message);
-                    if(Objects.equals(response.code, Constants.CODE_ERROR))
+                    bytes = bluetoothConnection.inputStream.read(buffer);
+                    String readMessage = new String(buffer, 0, bytes);
+                    BluetoothMessageResponse response = BluetoothMessageResponse.fromJson(readMessage);
+
+                    if (Objects.equals(response.code, Constants.CODE_ERROR))
                     {
-                        if(onErrorMessageReceivedListener!= null){
+                        if (onErrorMessageReceivedListener != null)
+                        {
                             this.onErrorMessageReceivedListener.onMessageReceived(bluetoothConnection.device, response);
                         }
                     }
                     else if (Objects.equals(response.code, Constants.CODE_UPDATE_STATUS))
                     {
-                        if(onUpdateMessageReceivedListener!= null){
+                        if (onUpdateMessageReceivedListener != null)
+                        {
                             this.onUpdateMessageReceivedListener.onMessageReceived(bluetoothConnection.device, response);
                         }
                     }
                 }
-            } catch (IOException e) {
+            }
+            catch (IOException e)
+            {
                 break;
             }
         }
-        try {
+        try
+        {
             reader.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             throw new RuntimeException(e);
         }
     }
+
     public void sendData(String data)
     {
-        if(isConnected())
+        if (isConnected())
         {
-            Thread sendDataThread = new Thread(()->doWrite(bluetoothConnection.outputStream, data));
+            Thread sendDataThread = new Thread(() -> doWrite(bluetoothConnection.outputStream, data));
             sendDataThread.start();
         }
     }
@@ -227,11 +267,14 @@ public class BluetoothService extends Service
             stop = true;
             receiveDataThread = null;
             connectThread = null;
-            try {
+            try
+            {
                 bluetoothConnection.outputStream.close();
                 bluetoothConnection.inputStream.close();
                 bluetoothConnection.socket.close();
-            } catch (IOException e) {
+            }
+            catch (IOException e)
+            {
                 throw new RuntimeException(e);
             }
             bluetoothConnection = null;
@@ -241,7 +284,8 @@ public class BluetoothService extends Service
     public void doWrite(OutputStream outputStream, String data)
     {
         byte[] msgBuffer = data.getBytes();
-        try {
+        try
+        {
             outputStream.write(msgBuffer);
         }
         catch (IOException e)
@@ -249,24 +293,30 @@ public class BluetoothService extends Service
         }
     }
 
-    public void setOnErrorMessageReceivedListener(OnMessageReceivedListener onErrorMessageReceivedListener) {
+    public void setOnErrorMessageReceivedListener(OnMessageReceivedListener onErrorMessageReceivedListener)
+    {
         this.onErrorMessageReceivedListener = onErrorMessageReceivedListener;
     }
-    public void setOnUpdateMessageReceivedListener(OnMessageReceivedListener onUpdateMessageReceivedListener) {
+
+    public void setOnUpdateMessageReceivedListener(OnMessageReceivedListener onUpdateMessageReceivedListener)
+    {
         this.onUpdateMessageReceivedListener = onUpdateMessageReceivedListener;
     }
 
-    public void setOnAckMessageReceivedListener(OnMessageReceivedListener onAckMessageReceivedListener) {
+    public void setOnAckMessageReceivedListener(OnMessageReceivedListener onAckMessageReceivedListener)
+    {
         this.onAckMessageReceivedListener = onAckMessageReceivedListener;
     }
 
-    public void setOnDeviceUnsupportedListener(OnMessageReceivedListener onDeviceUnsupportedListener) {
+    public void setOnDeviceUnsupportedListener(OnMessageReceivedListener onDeviceUnsupportedListener)
+    {
         this.onDeviceUnsupportedListener = onDeviceUnsupportedListener;
     }
 
     public class LocalBinder extends Binder
     {
-        BluetoothService getService() {
+        BluetoothService getService()
+        {
             return BluetoothService.this;
         }
     }

@@ -31,28 +31,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity{
-    //region Attributes
-    private BluetoothService bluetoothService;
-    private SharedPreferences pref;
-
+public class MainActivity extends AppCompatActivity
+{
     public static final int MULTIPLE_PERMISSIONS = 10;
-
-    //se crea un array de String con los permisos a solicitar en tiempo de ejecucion
-    //Esto se debe realizar a partir de Android 6.0, ya que con verdiones anteriores
-    //con solo solicitarlos en el Manifest es suficiente
-    ArrayList<String> permissions;
-    private TextView lblStatusDescription;
-
-    private TextView lblCurrentPercentage;
-
-    private final BroadcastReceiver bluetoothStatusChangedBroadcastReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver bluetoothStatusChangedBroadcastReceiver = new BroadcastReceiver()
+    {
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, Intent intent)
+        {
             String action = intent.getAction();
-            if (action != null && action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+            if (action != null && action.equals(BluetoothAdapter.ACTION_STATE_CHANGED))
+            {
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-                if (state == BluetoothAdapter.STATE_OFF) {
+                if (state == BluetoothAdapter.STATE_OFF)
+                {
                     Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
                     btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(btintent);
@@ -60,8 +52,8 @@ public class MainActivity extends AppCompatActivity{
             } // Handle Bluetooth state change
         }
     };
-    private IntentFilter bluetoothStatusChangedFilter;
-    private final View.OnClickListener btnRefreshOnClickListener = new View.OnClickListener() {
+    private final View.OnClickListener btnRefreshOnClickListener = new View.OnClickListener()
+    {
         @Override
         public void onClick(View view)
         {
@@ -69,97 +61,163 @@ public class MainActivity extends AppCompatActivity{
             BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
         }
     };
-
-    private final OnMessageReceivedListener onMessageReceivedListener = new OnMessageReceivedListener() {
+    private final View.OnClickListener btnSettingsOnClickListener = new View.OnClickListener()
+    {
         @Override
-        public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response) {
-            updateLabels(response);
-        }
-    };
-
-    private void updateLabels(BluetoothMessageResponse response) {
-        lblStatusDescription.setText(response.data);
-        lblCurrentPercentage.setText(response.getCurrentPercentage()+"%");
-        if (Objects.equals(response.data, "CON CAPACIDAD"))
+        public void onClick(View view)
         {
-            lblStatusDescription.setTextColor(Color.GREEN);
-        }
-        else if(Objects.equals(response.data, "CAPACIDAD CRITICA"))
-        {
-            lblStatusDescription.setTextColor(Color.YELLOW);
-        }
-        else if(Objects.equals(response.data, "SIN CAPACIDAD"))
-        {
-            lblStatusDescription.setTextColor(Color.RED);
-        }
-        else  if(Objects.equals(response.data, "EN MANTENIMIENTO")){
-            lblStatusDescription.setTextColor(Color.BLUE);
-        }
-    }
-
-    private final View.OnClickListener btnSettingsOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
     };
-    private final View.OnClickListener btnStartMaintenanceOnClickListener = new View.OnClickListener() {
+    private final View.OnClickListener btnStartMaintenanceOnClickListener = new View.OnClickListener()
+    {
         @Override
-        public void onClick(View view) {
-            Log.i("Envio","Envio mensaje de inicio mantenimiento");
+        public void onClick(View view)
+        {
+            Log.i("Envio", "Envio mensaje de inicio mantenimiento");
             BluetoothMessage bluetoothMessage = new BluetoothMessage(0);
             BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
         }
     };
-    private final View.OnClickListener btnCompleteMaintenanceOnClickListener = new View.OnClickListener() {
+    private final View.OnClickListener btnCompleteMaintenanceOnClickListener = new View.OnClickListener()
+    {
         @Override
-        public void onClick(View view) {
-            Log.i("Envio","Envio mensaje de fin de mantenimiento");
+        public void onClick(View view)
+        {
+            Log.i("Envio", "Envio mensaje de fin de mantenimiento");
             BluetoothMessage bluetoothMessage = new BluetoothMessage(1);
             BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
         }
     };
-    private final View.OnClickListener btnDisableOnClickListener=new View.OnClickListener() {
+    private final View.OnClickListener btnDisableOnClickListener = new View.OnClickListener()
+    {
         @Override
-        public void onClick(View view) {
-            Log.i("Envio","Envio mensaje de desahabilitar????");
+        public void onClick(View view)
+        {
+            Log.i("Envio", "Envio mensaje de desahabilitar????");
             BluetoothMessage bluetoothMessage = new BluetoothMessage(2);
             BluetoothService.getInstance().sendData(bluetoothMessage.Serialize());
         }
     };
+    //se crea un array de String con los permisos a solicitar en tiempo de ejecucion
+    //Esto se debe realizar a partir de Android 6.0, ya que con verdiones anteriores
+    //con solo solicitarlos en el Manifest es suficiente
+    ArrayList<String> permissions;
+    //region Attributes
+    private BluetoothService bluetoothService;
+    private SharedPreferences pref;
+    private TextView lblStatusDescription;
+    private TextView lblCurrentPercentage;
+    private final OnMessageReceivedListener onMessageReceivedListener = new OnMessageReceivedListener()
+    {
+        @Override
+        public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response)
+        {
+            updateLabels(response);
+        }
+    };
+    private final OnMessageReceivedListener onUpdateMessageReceivedListener = new OnMessageReceivedListener()
+    {
+        @Override
+        public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response)
+        {
+            updateLabels(response);
+        }
+    };
+    private final ServiceConnection serviceConnection = new ServiceConnection()
+    {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder binder)
+        {
+            BluetoothService.LocalBinder localBinder = (BluetoothService.LocalBinder) binder;
+            bluetoothService = localBinder.getService();
+            if (!bluetoothService.getAdapter().isEnabled())
+            {
+                Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
+                btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(btintent);
+            }
+            bluetoothService.setOnUpdateMessageReceivedListener(onUpdateMessageReceivedListener);
+            bluetoothService.setOnAckMessageReceivedListener(onMessageReceivedListener);
+            SharedPreferences shared = getSharedPreferences("info", MODE_PRIVATE);
+            String string_temp = shared.getString("connectedDevice", null);
+            if (string_temp != null)
+            {
+                BluetoothDevice device = bluetoothService.getAdapter().getRemoteDevice(string_temp);
+                bluetoothService.connectToDevice(device);
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name)
+        {
+        }
+    };
 
     //endregion
+    private IntentFilter bluetoothStatusChangedFilter;
+    //endregion
+
 
     //region Constructor
-    public MainActivity() {
-        permissions = new ArrayList<String>(){{
-                add(Manifest.permission.ACCESS_COARSE_LOCATION);
-                add(Manifest.permission.ACCESS_FINE_LOCATION);
-                add(Manifest.permission.READ_PHONE_STATE);
-                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU){
-                    add(Manifest.permission.READ_EXTERNAL_STORAGE);
-                }else{
-                    add(Manifest.permission.READ_MEDIA_AUDIO);
-                    add(Manifest.permission.READ_MEDIA_VIDEO);
-                    add(Manifest.permission.READ_MEDIA_IMAGES);
-                }
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S){
-                    add(Manifest.permission.BLUETOOTH_SCAN);
-                    add(Manifest.permission.BLUETOOTH_CONNECT);
-                }else{
-                    add(Manifest.permission.BLUETOOTH);
-                    add(Manifest.permission.BLUETOOTH_ADMIN);
-                }
+    public MainActivity()
+    {
+        permissions = new ArrayList<String>()
+        {{
+            add(Manifest.permission.ACCESS_COARSE_LOCATION);
+            add(Manifest.permission.ACCESS_FINE_LOCATION);
+            add(Manifest.permission.READ_PHONE_STATE);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+            {
+                add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+            else
+            {
+                add(Manifest.permission.READ_MEDIA_AUDIO);
+                add(Manifest.permission.READ_MEDIA_VIDEO);
+                add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            {
+                add(Manifest.permission.BLUETOOTH_SCAN);
+                add(Manifest.permission.BLUETOOTH_CONNECT);
+            }
+            else
+            {
+                add(Manifest.permission.BLUETOOTH);
+                add(Manifest.permission.BLUETOOTH_ADMIN);
+            }
         }};
     }
-    //endregion
 
+    private void updateLabels(BluetoothMessageResponse response)
+    {
+        lblStatusDescription.setText(response.data);
+        lblCurrentPercentage.setText(response.getCurrentPercentage() + "%");
+        if (Objects.equals(response.data, "CON CAPACIDAD"))
+        {
+            lblStatusDescription.setTextColor(Color.GREEN);
+        }
+        else if (Objects.equals(response.data, "CAPACIDAD CRITICA"))
+        {
+            lblStatusDescription.setTextColor(Color.YELLOW);
+        }
+        else if (Objects.equals(response.data, "SIN CAPACIDAD"))
+        {
+            lblStatusDescription.setTextColor(Color.RED);
+        }
+        else if (Objects.equals(response.data, "EN MANTENIMIENTO"))
+        {
+            lblStatusDescription.setTextColor(Color.BLUE);
+        }
+    }
 
     //region Overrides
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
 
         //Se asigna un layout al activity para poder vincular los distintos componentes
@@ -203,8 +261,10 @@ public class MainActivity extends AppCompatActivity{
     protected void onResume()
     {
         super.onResume();
-        if(bluetoothService != null){
-            if(!bluetoothService.getAdapter().isEnabled()){
+        if (bluetoothService != null)
+        {
+            if (!bluetoothService.getAdapter().isEnabled())
+            {
                 Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
                 btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(btintent);
@@ -214,18 +274,22 @@ public class MainActivity extends AppCompatActivity{
     }
 
     @Override
-    protected void onPause() {
+    protected void onPause()
+    {
         super.onPause();
     }
 
     @Override
-    protected void onStop() {
+    protected void onStop()
+    {
         super.onStop();
         unregisterReceiver(bluetoothStatusChangedBroadcastReceiver);
     }
+    //endregion
 
     @Override
-    protected void onRestart() {
+    protected void onRestart()
+    {
         super.onRestart();
     }
 
@@ -236,40 +300,47 @@ public class MainActivity extends AppCompatActivity{
         BluetoothService.getInstance().disconnect();
         unbindService(serviceConnection);
     }
-    //endregion
-
 
     //Metodo que chequea si estan habilitados los permisos
-    private  boolean checkPermissions() {
+    private boolean checkPermissions()
+    {
         int result;
         List<String> listPermissionsNeeded = new ArrayList<>();
 
-        for (String p:permissions) {
-            result = ContextCompat.checkSelfPermission(this,p);
-            if (result != PackageManager.PERMISSION_GRANTED) {
+        for (String p : permissions)
+        {
+            result = ContextCompat.checkSelfPermission(this, p);
+            if (result != PackageManager.PERMISSION_GRANTED)
+            {
                 listPermissionsNeeded.add(p);
             }
         }
 
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]),MULTIPLE_PERMISSIONS );
+        if (!listPermissionsNeeded.isEmpty())
+        {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), MULTIPLE_PERMISSIONS);
             return false;
         }
         return true;
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+    {
         ArrayList<String> deniedPermissions = new ArrayList<>();
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == MULTIPLE_PERMISSIONS) {
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == MULTIPLE_PERMISSIONS)
+        {
+            for (int i = 0; i < permissions.length; i++)
+            {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
+                {
                     deniedPermissions.add(permissions[i]);
                 }
             }
 
-            if (!deniedPermissions.isEmpty()) {
+            if (!deniedPermissions.isEmpty())
+            {
                 Intent permissionMissingIntent = new Intent(MainActivity.this, PermissionsMissingActivity.class);
                 permissionMissingIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 Bundle extras = new Bundle();
@@ -279,36 +350,4 @@ public class MainActivity extends AppCompatActivity{
             }
         }
     }
-
-    private final OnMessageReceivedListener onUpdateMessageReceivedListener = new OnMessageReceivedListener() {
-        @Override
-        public void onMessageReceived(BluetoothDevice model, BluetoothMessageResponse response) {
-            updateLabels(response);
-        }
-    };
-
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder binder) {
-            BluetoothService.LocalBinder localBinder = (BluetoothService.LocalBinder) binder;
-            bluetoothService = localBinder.getService();
-            if(!bluetoothService.getAdapter().isEnabled()){
-                Intent btintent = new Intent(MainActivity.this, BluetoothDisabledActivity.class);
-                btintent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(btintent);
-            }
-            bluetoothService.setOnUpdateMessageReceivedListener(onUpdateMessageReceivedListener);
-            bluetoothService.setOnAckMessageReceivedListener(onMessageReceivedListener);
-            SharedPreferences shared = getSharedPreferences("info",MODE_PRIVATE);
-            String string_temp = shared.getString("connectedDevice", null);
-            if(string_temp!= null){
-                BluetoothDevice device = bluetoothService.getAdapter().getRemoteDevice(string_temp);
-                bluetoothService.connectToDevice(device);
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-        }
-    };
 }
