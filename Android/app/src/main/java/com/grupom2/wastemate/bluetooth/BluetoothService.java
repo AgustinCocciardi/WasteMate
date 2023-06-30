@@ -16,7 +16,7 @@ public class BluetoothService extends Service
 {
     // Implementamos un Singleton dentro del servicio
     // para poder acceder desde cualquier activity.
-    private static BluetoothManager bluetoothManager;
+    private static volatile BluetoothManager bluetoothManager;
 
     public BluetoothService()
     {

@@ -24,12 +24,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
+import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.adapter.BaseDeviceListAdapter;
 import com.grupom2.wastemate.adapter.PairedDeviceListAdapter;
 import com.grupom2.wastemate.bluetooth.BluetoothManager;
 import com.grupom2.wastemate.bluetooth.BluetoothService;
+import com.grupom2.wastemate.constant.Actions;
+import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.model.BluetoothMessage;
-import com.grupom2.wastemate.model.BluetoothMessageResponse;
 import com.grupom2.wastemate.receiver.BluetoothDisabledBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
 import com.grupom2.wastemate.util.CustomProgressDialog;
@@ -38,8 +40,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
-
-import com.grupom2.wastemate.R;
 
 public class SettingsActivity extends AppCompatActivity implements SensorEventListener
 {
@@ -99,7 +99,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            BluetoothMessageResponse data = BroadcastUtil.getData(intent);
+            BluetoothDeviceData data = BroadcastUtil.getData(intent);
             //TODO: PINTAR DE VIOLETA?? mejorar
             Log.d("deviceConnectedBroadcastReceiver:onReceive", new Gson().toJson(data));
 
@@ -118,10 +118,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             if (index > 0)
             {
                 PairedDeviceListAdapter.PairedDeviceViewHolder viewHolder = (PairedDeviceListAdapter.PairedDeviceViewHolder) pairedDevicesRecyclerView.findViewHolderForAdapterPosition(index);
-//                SharedPreferences pref = getSharedPreferences("info", MODE_PRIVATE);
-//                SharedPreferences.Editor editor = pref.edit();
-//                editor.putString("connectedDevice", bluetoothService.getDevice().getAddress());
-//                editor.apply();
                 viewHolder.setConnectedIndicatorColor(getResources().getColor(R.color.purple_500, getTheme()));
             }
             customProgressDialog.dismiss();
@@ -227,15 +223,14 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                 customProgressDialog.show();
                 if (bluetoothService != null)
                 {
-                    //TODO: ADAPTARLO A LA NUEVA VERSION
-//                    if (bluetoothService.isDeviceConnected(device))
-//                    {
-//                        bluetoothService.disconnect();
-//                    }
-//                    else if (device.getBondState() == BluetoothDevice.BOND_BONDED)
-//                    {
-//                        bluetoothService.connectToDevice(device);
-//                    }
+                    if (bluetoothService.getBluetoothConnection().isConnected())
+                    {
+                        bluetoothService.disconnectAndForget();
+                    }
+                    else
+                    {
+                        bluetoothService.connectToDevice(device.getAddress());
+                    }
                 }
             }
             catch (SecurityException e)
@@ -315,8 +310,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         BroadcastUtil.registerReceiver(this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
         BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
-        BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver);
-        BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver);
+        BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK);
+        BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.ACTION_UNSUPPORTED_DEVICE);
 
         btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
         pairedDevicesAdapter.setOnItemClickedListener(pairedDeviceListItemOnClickListener);
@@ -433,10 +428,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             PairedDeviceListAdapter.PairedDeviceViewHolder viewHolder = (PairedDeviceListAdapter.PairedDeviceViewHolder) pairedDevicesRecyclerView.findViewHolderForAdapterPosition(index);
             if (Objects.equals(intent.getAction(), BluetoothDevice.ACTION_ACL_DISCONNECTED))
             {
-//                SharedPreferences pref = getSharedPreferences("info", MODE_PRIVATE);
-//                SharedPreferences.Editor editor = pref.edit();
-//                editor.remove("connectedDevice");
-//                editor.apply();
                 viewHolder.setConnectedIndicatorColor(getResources().getColor(R.color.grey, getTheme()));
             }
         }

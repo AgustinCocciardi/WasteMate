@@ -645,7 +645,7 @@ void error()
   DynamicJsonDocument doc(100);
   doc[COMMAND_KEY_CODE] = CODE_ERROR;
   doc[COMMAND_KEY_DATA] = MESSAGE_ERROR;
-  serializeJson(doc, bluetooth_serial);
+  //serializeJson(doc, bluetooth_serial);
 }
 
 void log_current_status()

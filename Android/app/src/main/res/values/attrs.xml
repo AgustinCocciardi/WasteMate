@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <declare-styleable name="BluetoothSwitchCompat">
-        <attr name="switchTextOn" format="string" />
-        <attr name="switchTextOff" format="string" />
-    </declare-styleable>
-</resources>

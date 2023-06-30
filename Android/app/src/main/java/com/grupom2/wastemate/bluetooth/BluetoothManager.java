@@ -25,7 +25,7 @@ public class BluetoothManager
     private boolean isDisconnectExplicit = false;
     private static final long RECONNECT_DELAY = 3000; // 3 seconds
     private Context context;
-    private BroadcastReceiver receiver;
+    private Handler handler;
     //endregion
 
 
@@ -36,27 +36,15 @@ public class BluetoothManager
         prefsManager = new BluetoothPreferencesManager(context);
         this.context = context;
         loadLastConnectedDevice();
-
-        receiver = new BroadcastReceiver()
-        {
-            @Override
-            public void onReceive(Context context, Intent intent)
-            {
-                String deviceAddress = bluetoothConnection.getDeviceAddress();
-                if (deviceAddress != null && !deviceAddress.isEmpty())
-                {
-                    saveLastConnectedDevice(bluetoothConnection.getDeviceAddress());
-                    startConnectionStatusMonitoring();
-                }
-            }
-        };
     }
 
     public void connectToDevice(String deviceAddress)
     {
         disconnect();
+        autoReconnect = true;
         bluetoothConnection.connectToDevice(deviceAddress, YOUR_UUID);
-        BroadcastUtil.registerLocalReceiver(context, receiver, Actions.ACTION_ACK);
+        startConnectionStatusMonitoring();
+
     }
 
     public void write(Object data)
@@ -67,15 +55,16 @@ public class BluetoothManager
 
     public void disconnect()
     {
+        stopConnectionStatusMonitoring();
         bluetoothConnection.disconnect();
-        BroadcastUtil.unregisterLocalReceiver(context, receiver);
-        removeLastConnectedDevice();
         isDisconnectExplicit = true;
     }
 
-    public void setAutoReconnect(boolean autoReconnect)
+    public void disconnectAndForget()
     {
-        this.autoReconnect = autoReconnect;
+        disconnect();
+        BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_NO_DEVICE_CONNECTED, null);
+        removeLastConnectedDevice();
     }
 
     private void saveLastConnectedDevice(String deviceAddress)
@@ -94,6 +83,10 @@ public class BluetoothManager
         if (deviceAddress != null)
         {
             connectToDevice(deviceAddress);
+        }
+        else
+        {
+            BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_NO_DEVICE_CONNECTED, null);
         }
     }
 
@@ -116,7 +109,7 @@ public class BluetoothManager
 
     private void startConnectionStatusMonitoring()
     {
-        final Handler handler = new Handler(Looper.getMainLooper());
+        handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(new Runnable()
         {
             @Override
@@ -134,6 +127,14 @@ public class BluetoothManager
                 }
             }
         }, RECONNECT_DELAY);
+    }
+
+    private void stopConnectionStatusMonitoring()
+    {
+        if (handler != null)
+        {
+            handler.removeCallbacksAndMessages(null);
+        }
     }
 
     private boolean isConnected()
