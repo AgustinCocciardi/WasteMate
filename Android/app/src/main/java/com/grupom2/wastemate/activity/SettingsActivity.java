@@ -99,7 +99,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            BluetoothDeviceData data = BroadcastUtil.getData(intent);
+            BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);
             //TODO: PINTAR DE VIOLETA?? mejorar
             Log.d("deviceConnectedBroadcastReceiver:onReceive", new Gson().toJson(data));
 

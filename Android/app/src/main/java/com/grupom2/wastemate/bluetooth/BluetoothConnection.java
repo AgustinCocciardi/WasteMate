@@ -15,7 +15,6 @@ import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.model.BluetoothMessage;
 import com.grupom2.wastemate.model.BluetoothMessageResponse;
-import com.grupom2.wastemate.model.OutParameter;
 import com.grupom2.wastemate.util.BroadcastUtil;
 import com.grupom2.wastemate.util.NavigationUtil;
 import com.grupom2.wastemate.util.PermissionHelper;
@@ -24,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -120,10 +120,9 @@ public class BluetoothConnection
         }
     }
 
-    private boolean read(InputStream inputStream, OutParameter<BluetoothMessageResponse> response)
+    private ArrayList<BluetoothMessageResponse> read(InputStream inputStream)
     {
-        boolean read = false;
-
+        ArrayList<BluetoothMessageResponse> response = new ArrayList<>();
         try
         {
             synchronized (lock)
@@ -133,17 +132,24 @@ public class BluetoothConnection
                     byte[] buffer = new byte[256];
                     int bytes = inputStream.read(buffer);
                     String readMessage = new String(buffer, 0, bytes);
-                    response.value = BluetoothMessageResponse.fromJson(readMessage);
-                    read = true;
+
+                    String[] jsonParts = readMessage.split("\\}\\{"); // Split by the JSON object delimiter
+
+                    String json = Arrays.stream(jsonParts).findFirst().orElse("");
+
+                    if (!json.endsWith("}"))
+                    {
+                        json = json + "}";
+                    }
+
+                    response.add(BluetoothMessageResponse.fromJson(json));
                 }
             }
         }
         catch (IOException e)
         {
-            read = false;
         }
-
-        return read;
+        return response;
     }
 
     public String getDeviceAddress()
@@ -271,18 +277,24 @@ public class BluetoothConnection
                     InputStream inputStream = bluetoothSocket.getInputStream();
                     if (inputStream.available() > 0)
                     {
-                        OutParameter<BluetoothMessageResponse> out = new OutParameter<>();
-                        boolean read = read(inputStream, out);
-                        BluetoothMessageResponse response = out.value;
-                        if (read && out != null && Objects.equals(response.getCode(), Constants.CODE_ACK))
+                        ArrayList<BluetoothMessageResponse> read = read(inputStream);
+
+                        if (read != null && !read.isEmpty())
                         {
-                            ackReceived = true;
-                            deviceData = new BluetoothDeviceData();
-                            deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
-                            socketReader = new SocketReader();
-                            socketReader.start();
-                            BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_ACK, deviceData);
-                            removeCallbacksAndMessages(null);
+                            for (BluetoothMessageResponse response : read)
+                            {
+                                if (Objects.equals(response.getCode(), Constants.CODE_ACK))
+                                {
+                                    ackReceived = true;
+                                    deviceData = new BluetoothDeviceData();
+                                    deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
+                                    socketReader = new SocketReader();
+                                    socketReader.start();
+                                    BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_ACK, deviceData);
+                                    removeCallbacksAndMessages(null);
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -338,23 +350,22 @@ public class BluetoothConnection
             @Override
             public void handleMessage(android.os.Message msg)
             {
-                OutParameter<BluetoothMessageResponse> out = new OutParameter<>();
-                boolean read = false;
                 try
                 {
-                    read = read(bluetoothSocket.getInputStream(), out);
-                    if (read)
+                    ArrayList<BluetoothMessageResponse> read = read(bluetoothSocket.getInputStream());
+                    if (read != null && !read.isEmpty())
                     {
-                        BluetoothMessageResponse response = out.value;
-
-                        String action = response.getCode();
-                        if (action != null && !action.isEmpty())
+                        for (BluetoothMessageResponse response : read)
                         {
-                            if (action.equals(Actions.ACTION_ACK) || action.equals(Actions.ACTION_UPDATE))
+                            String action = response.getCode();
+                            if (action != null && !action.isEmpty())
                             {
-                                deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
+                                if (action.equals(Actions.ACTION_ACK) || action.equals(Actions.ACTION_UPDATE))
+                                {
+                                    deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
+                                }
+                                BroadcastUtil.sendLocalBroadcast(context, action, deviceData);
                             }
-                            BroadcastUtil.sendLocalBroadcast(context, action, deviceData);
                         }
                     }
                     else

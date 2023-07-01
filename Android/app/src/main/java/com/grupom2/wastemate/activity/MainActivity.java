@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            BluetoothDeviceData data = BroadcastUtil.getData(intent);
+            BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);
             updateLabels(data);
         }
     };

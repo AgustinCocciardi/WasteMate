@@ -18,15 +18,23 @@ public class BroadcastUtil
     {
         Intent intent = new Intent(action);
         Bundle bundle = new Bundle();
-        bundle.putSerializable("data", data);
-        intent.putExtras(bundle);
+        if (data != null)
+        {
+            bundle.putSerializable("data", data);
+            intent.putExtras(bundle);
+        }
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
-    public static <T extends Serializable> T getData(Intent intent)
+    public static <T extends Serializable> T getData(Intent intent, Class<T> type)
     {
         Bundle extras = intent.getExtras();
-        return extras != null ? (T) extras.getSerializable("data") : null;
+        Serializable data = null;
+        if (extras != null)
+        {
+            data = extras.getSerializable("data");
+        }
+        return (type.isInstance(data) ? type.cast(data) : null);
     }
 
     public static void registerLocalReceiver(Context context, BroadcastReceiver receiver, String... actions)
