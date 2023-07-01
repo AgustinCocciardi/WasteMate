@@ -12,8 +12,10 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,10 +32,12 @@ import com.grupom2.wastemate.adapter.PairedDeviceListAdapter;
 import com.grupom2.wastemate.bluetooth.BluetoothManager;
 import com.grupom2.wastemate.bluetooth.BluetoothService;
 import com.grupom2.wastemate.constant.Actions;
+import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.model.BluetoothMessage;
 import com.grupom2.wastemate.receiver.BluetoothDisabledBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
+import com.grupom2.wastemate.util.CalibrationHelpers;
 import com.grupom2.wastemate.util.CustomProgressDialog;
 
 import java.lang.reflect.Method;
@@ -134,6 +138,18 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private boolean showingAdminSettings;
 
     private ConstraintLayout mainSettingsLayout;
+
+    private final View.OnClickListener btnStartCalibrationOnClickListener = new View.OnClickListener()
+    {
+        @Override
+        public void onClick(View v)
+        {
+            Spinner spinnerSensores = (Spinner) findViewById(R.id.spinner_sensors);
+            int sensorCalibrationCode = CalibrationHelpers.sensorsDictionary.get(spinnerSensores.getSelectedItem().toString());
+            BluetoothMessage message = new BluetoothMessage(sensorCalibrationCode);
+            BluetoothService.getInstance().write(message);
+        }
+    };
     private final View.OnClickListener btnSendSettingsOnClickListener = new View.OnClickListener()
     {
         @Override
@@ -142,7 +158,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             int weightLimit = Integer.parseInt(txtWeightLimit.getText().toString());
             double minimumDistance = Integer.parseInt(txtMinimumDistance.getText().toString()) / 100.0;
             double criticalDistance = Integer.parseInt(txtCriticalDistance.getText().toString()) / 100.0;
-            BluetoothMessage message = new BluetoothMessage(3, weightLimit, minimumDistance, criticalDistance);
+            BluetoothMessage message = new BluetoothMessage(Constants.CODE_CONFIGURE_THRESHOLDS, weightLimit, minimumDistance, criticalDistance);
             BluetoothService.getInstance().write(message);
 
             adminSettingsLayout.setVisibility(View.GONE);
@@ -150,6 +166,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             showingAdminSettings = false;
         }
     };
+
     private final View.OnClickListener toolbarButtonBackOnClickListener = new View.OnClickListener()
     {
         @Override
@@ -252,7 +269,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
     };
     private BroadcastReceiver bluetoothDisabledBroadcastReceiver = new BluetoothDisabledBroadcastReceiver();
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -276,11 +292,17 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         txtMinimumDistance = findViewById(R.id.txt_full_percentage);
         txtWeightLimit = findViewById(R.id.txt_weight_limit);
         Button btnSendSettings = findViewById(R.id.button_send_settings);
-
+        Button btnStartCalibration = findViewById(R.id.button_start_calibration);
         mainSettingsLayout = findViewById(R.id.layoutMainSettings);
         RecyclerView availableDevicesRecyclerView = findViewById(R.id.recycler_view_available);
         pairedDevicesRecyclerView = findViewById(R.id.recycler_view_paired);
-
+        //region spinner
+        Spinner spinnerSensors=findViewById(R.id.spinner_sensors);
+        ArrayAdapter<CharSequence> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item);//ArrayAdapter.createFromResource(this, R.array.sensors, android.R.layout.simple_spinner_item);
+        adapter.addAll(CalibrationHelpers.sensorsDictionary.keySet());
+        //adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        spinnerSensors.setAdapter(adapter);
+        //endregion
         // using toolbar as ActionBar
         setSupportActionBar(toolbar);
 
@@ -314,6 +336,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.ACTION_UNSUPPORTED_DEVICE);
 
         btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
+        btnStartCalibration.setOnClickListener(btnStartCalibrationOnClickListener);
         pairedDevicesAdapter.setOnItemClickedListener(pairedDeviceListItemOnClickListener);
         pairedDevicesAdapter.setOnUnpairDeviceClickListener(pairedListItemOnUnpairListener);
         availableDevicesAdapter.setOnItemClickedListener(unpairedListItemOnClickListener);

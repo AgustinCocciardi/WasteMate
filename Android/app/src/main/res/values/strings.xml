@@ -27,4 +27,11 @@
     <string name="txt_full_percentage_hint">80</string>
     <string name="label_device_address_text">AA:32:AA:21</string>
     <string name="label_device_name_text">Galaxy Nexus</string>
+    <string name="list_sensors_spinner">listSensors</string>
+    <string-array name="sensors">
+        <item>Flex</item>
+        <item>PIR</item>
+        <item>Ultrasonido</item>
+    </string-array>
+
 </resources>

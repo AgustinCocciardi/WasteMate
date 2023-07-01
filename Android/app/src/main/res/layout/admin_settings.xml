@@ -54,37 +54,37 @@
             android:layout_marginEnd="32dp"
             android:ems="10"
             android:hint="@string/txt_weight_limit_hint"
+            android:importantForAutofill="no"
             android:inputType="numberDecimal"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:importantForAutofill="no" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
             android:id="@+id/txt_critical_percentage"
             android:layout_width="160dp"
-            android:hint="@string/txt_critical_capacity_hint"
             android:layout_height="50dp"
             android:layout_marginTop="36dp"
             android:layout_marginEnd="32dp"
             android:ems="10"
+            android:hint="@string/txt_critical_capacity_hint"
+            android:importantForAutofill="no"
             android:inputType="numberDecimal"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txt_weight_limit"
-            android:importantForAutofill="no" />
+            app:layout_constraintTop_toBottomOf="@+id/txt_weight_limit" />
 
         <Button
             android:id="@+id/button_send_settings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="49dp"
-            android:text="@string/button_send_text"
-            android:theme="@style/ButtonStyle"
             android:background="@color/purple_700"
             android:drawableTint="@color/white"
             android:padding="10dp"
+            android:text="@string/button_send_text"
             android:textSize="20sp"
+            android:theme="@style/ButtonStyle"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/label_full_percentage" />
@@ -92,16 +92,44 @@
         <EditText
             android:id="@+id/txt_full_percentage"
             android:layout_width="160dp"
-            android:hint="@string/txt_full_percentage_hint"
             android:layout_height="50dp"
             android:layout_marginTop="36dp"
             android:layout_marginEnd="32dp"
             android:ems="10"
+            android:hint="@string/txt_full_percentage_hint"
+            android:importantForAutofill="no"
             android:inputType="numberDecimal"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txt_critical_percentage"
-            android:importantForAutofill="no" />
+            app:layout_constraintTop_toBottomOf="@+id/txt_critical_percentage" />
+
+        <Spinner
+            android:id="@+id/spinner_sensors"
+            android:layout_width="183dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="56dp"
+            android:padding="10dp"
+            android:textSize="50sp"
+            android:textStyle="bold|italic"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/button_send_settings" />
+
+        <Button
+            android:id="@+id/button_start_calibration"
+            android:layout_width="150dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="40dp"
+            android:layout_marginTop="52dp"
+            android:layout_marginEnd="65dp"
+            android:background="@color/purple_700"
+            android:drawableTint="@color/white"
+            android:text="INICIAR CALIBRACIÓN"
+            android:theme="@style/ButtonStyle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/spinner_sensors"
+            app:layout_constraintTop_toBottomOf="@+id/button_send_settings" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
