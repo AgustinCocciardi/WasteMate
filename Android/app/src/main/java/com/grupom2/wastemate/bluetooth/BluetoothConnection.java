@@ -281,19 +281,16 @@ public class BluetoothConnection
 
                         if (read != null && !read.isEmpty())
                         {
-                            for (BluetoothMessageResponse response : read)
+                            BluetoothMessageResponse response = read.stream().filter(r -> Objects.equals(r.getCode(), Constants.CODE_ACK)).findFirst().orElse(null);
+                            if (response != null)
                             {
-                                if (Objects.equals(response.getCode(), Constants.CODE_ACK))
-                                {
-                                    ackReceived = true;
-                                    deviceData = new BluetoothDeviceData();
-                                    deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
-                                    socketReader = new SocketReader();
-                                    socketReader.start();
-                                    BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_ACK, deviceData);
-                                    removeCallbacksAndMessages(null);
-                                    break;
-                                }
+                                ackReceived = true;
+                                deviceData = new BluetoothDeviceData();
+                                deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
+                                socketReader = new SocketReader();
+                                socketReader.start();
+                                BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_ACK, deviceData);
+                                removeCallbacksAndMessages(null);
                             }
                         }
                     }
@@ -365,6 +362,14 @@ public class BluetoothConnection
                                     deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight());
                                 }
                                 BroadcastUtil.sendLocalBroadcast(context, action, deviceData);
+                                try
+                                {
+                                    Thread.sleep(200);
+                                }
+                                catch (InterruptedException e)
+                                {
+                                    throw new RuntimeException(e);
+                                }
                             }
                         }
                     }
