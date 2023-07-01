@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity
             builder.show();
         }
     };
-    private Button btnStartMaintenance;
+    private ImageButton btnStartMaintenance;
     private Button btnCompleteMaintenance;
     private Button btnDisable;
 
@@ -218,6 +218,7 @@ public class MainActivity extends AppCompatActivity
         {
             lblStatusDescription.setTextColor(Color.BLUE);
         }
+
     }
 
     //region Overrides
