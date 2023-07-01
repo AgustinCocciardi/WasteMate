@@ -529,9 +529,9 @@ bool try_deserialize(String serializedData, t_bluetooth_message *output)
   if (doc.containsKey(COMMAND_KEY_DATA))
   {
     t_bluetooth_data bluetooth_data;
-    bluetooth_data.critical_percentage = doc[COMMAND_KEY_CRITICAL_PERCENTAGE];
-    bluetooth_data.full_percentage = doc[COMMAND_KEY_FULL_PERCENTAGE];
-    bluetooth_data.maximum_weight = doc[COMMAND_KEY_MAXIMUM_WEIGHT];
+    bluetooth_data.critical_percentage = doc[COMMAND_KEY_DATA][COMMAND_KEY_CRITICAL_PERCENTAGE];
+    bluetooth_data.full_percentage = doc[COMMAND_KEY_DATA][COMMAND_KEY_FULL_PERCENTAGE];
+    bluetooth_data.maximum_weight = doc[COMMAND_KEY_DATA][COMMAND_KEY_MAXIMUM_WEIGHT];
     parsed_message.data = bluetooth_data;
   }
   *output = parsed_message;
@@ -650,48 +650,53 @@ void notify_state()
   doc[COMMAND_KEY_CODE] = CODE_UPDATE_STATUS;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
-  doc.shrinkToFit();
-  notify(doc);
+  serializeJson(doc, bluetooth_serial);
+  //doc.shrinkToFit();
+  //notify(doc);
 }
 
 void confirm_connection()
 {
-  DynamicJsonDocument doc(256);
+  DynamicJsonDocument doc(100);
   doc[COMMAND_KEY_CODE] = CODE_ACK;
   doc[COMMAND_KEY_CRITICAL_PERCENTAGE] = critical_percentage;
   doc[COMMAND_KEY_FULL_PERCENTAGE] = full_percentage;
   doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
-  size_t capacity = measureJson(doc);
-  doc.shrinkToFit();
-  notify(doc);
+  serializeJson(doc, bluetooth_serial);
+  //size_t capacity = measureJson(doc);
+  //doc.shrinkToFit();
+  //notify(doc);
 }
 
 // Notifica la ocurrencia de un error.
 void error()
 {
-  DynamicJsonDocument doc(100);
+  DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_ERROR;
   doc[COMMAND_KEY_DATA] = MESSAGE_ERROR;
-  doc.shrinkToFit();
-  notify(doc);
+  serializeJson(doc, bluetooth_serial);
+  //doc.shrinkToFit();
+  //notify(doc);
 }
 
 void calibration_started()
 {
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_STARTED;
-  doc.shrinkToFit();
-  notify(doc);
+  serializeJson(doc, bluetooth_serial);
+  //doc.shrinkToFit();
+  //notify(doc);
 }
 
 void calibration_finished()
 {
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_FINISHED;
-  doc.shrinkToFit();
-  notify(doc);
+  serializeJson(doc, bluetooth_serial);
+  //doc.shrinkToFit();
+  //notify(doc);
 }
 
 void notify(DynamicJsonDocument doc)

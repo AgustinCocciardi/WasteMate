@@ -241,7 +241,7 @@ public class MainActivity extends AppCompatActivity
         //endregion
 
         // using toolbar as ActionBar
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);
 
         //region Listeners
         btnRefresh.setOnClickListener(btnRefreshOnClickListener);
