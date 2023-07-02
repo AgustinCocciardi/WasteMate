@@ -233,6 +233,14 @@ public class MainActivity extends AppCompatActivity
         {
             customProgressDialog.dismiss();
             bluetoothManager = BluetoothService.getInstance();
+            if(!bluetoothManager.isEnabled())
+            {
+                NavigationUtil.navigateToBluetoothRequiredActivity(MainActivity.this);
+            }
+            else
+            {
+                // TODO: VER QUE HACER PARA SINCRONIZAR LOS DOS BROADCAST
+            }
         }
     }
     //endregion Broadcast Receivers
@@ -272,8 +280,9 @@ public class MainActivity extends AppCompatActivity
         // Se registran los broadcast receiver que deben estar mientras la activity no sea destruida.
         BroadcastUtil.registerLocalReceiver(this, serviceStartedBroadcastReceiver, Actions.ACTION_SERVICE_CONNECTED);
 
-
         BroadcastUtil.registerLocalReceiver(this, updateStatusBroadcastReceiver, Actions.ACTION_UPDATE, Actions.ACTION_ACK);
+
+
     }
 
     private void startService()

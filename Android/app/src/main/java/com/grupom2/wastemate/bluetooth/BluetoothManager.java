@@ -190,6 +190,11 @@ public class BluetoothManager
         return bluetoothConnection.getDeviceAddress();
     }
 
+    public boolean isEnabled()
+    {
+        return bluetoothConnection.getAdapter().isEnabled();
+    }
+
     private class DeviceConnectedBroadcastReceiver extends BroadcastReceiver
     {
         @Override
