@@ -1,5 +1,7 @@
 package com.grupom2.wastemate.constant;
 
+import com.grupom2.wastemate.R;
+
 public class Constants
 {
     public static final String UNIDENTIFIED = "UNIDENTIFIED";
@@ -16,4 +18,5 @@ public class Constants
     public static final int CODE_CALIBRATE_PIR=91;
     public static final int CODE_CALIBRATE_MAXIMUM_CAPACITY = 92;
     public static final int CODE_CALIBRATE_WEIGHT = 93;
+    public static final int MULTIPLE_PERMISSIONS = 10;
 }

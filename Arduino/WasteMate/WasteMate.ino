@@ -70,11 +70,6 @@
 // Utilizamos un pulso disparador de 10 microsegundos para el correcto funcionamiento del sensor ultrasonido porque es lo recomendado.
 #define TRIGGER_PULSE 10
 
-// MENSAJES
-#define MESSAGE_MAINTENANCE_NEEDED "EL TACHO NECESITA MANTENIMIENTO"
-#define MESSAGE_REQUEST_DISABLING "TACHO FUERA DE SERVICIO"
-#define MESSAGE_MAINTENANCE "EL TACHO ESTA EN MANTENIMIENTO"
-#define MESSAGE_MAINTENANCE_FINISHED "MANTENIMIENTO TERMINADO"
 #define MESSAGE_ERROR "LA OPERACION NO ES VALIDA PARA EL ESTADO ACTUAL"
 
 // COMANDOS
@@ -168,8 +163,6 @@ void none();
 void open();
 void close();
 void disable();
-void send_maintenance();
-void request_disabling();
 void reset();
 void error();
 void log_current_status();
@@ -242,11 +235,11 @@ byte index_verification;
 // MAQUINA DE ESTADO
 t_actions action[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
     {
-        {none, close, open, disable, none, none, disable, error, none, error},              // ST_UNF
-        {none, close, open, disable, none, none, disable, error, error, request_disabling}, // ST_CRIT_CAP
-        {none, none, none, none, none, none, none, send_maintenance, error, none},          // ST_NO_CAP
-        {none, none, none, none, none, none, none, error, reset, error},                    // ST_MAINT
-                                                                                            // EV_CONT        EV_NPD      EV_PD      EV_MAX_WR      EV_UNF      EV_CCR      EV_MCR        EV_SM               EV_MF      EV_DIS                 EV_CON_REQ
+        {none, close, open, disable, none, none, disable, error, none, error},    // ST_UNF
+        {none, close, open, disable, none, none, disable, error, error, disable}, // ST_CRIT_CAP
+        {none, none, none, none, none, none, none, none, error, none},            // ST_NO_CAP
+        {none, none, none, none, none, none, none, error, reset, error},          // ST_MAINT
+                                                                                  // EV_CONT        EV_NPD      EV_PD      EV_MAX_WR      EV_UNF      EV_CCR      EV_MCR        EV_SM               EV_MF      EV_DIS                 EV_CON_REQ
 };
 
 t_status transition[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
@@ -488,8 +481,8 @@ void process_command(const t_bluetooth_message *bluetooth_message)
 
   case CODE_CONFIGURE_THRESHOLDS:
     debug_println(bluetooth_message->data.full_percentage);
-      debug_println(bluetooth_message->data.critical_percentage);
-        debug_println(bluetooth_message->data.maximum_weight);
+    debug_println(bluetooth_message->data.critical_percentage);
+    debug_println(bluetooth_message->data.maximum_weight);
     full_percentage = bluetooth_message->data.full_percentage;
     critical_percentage = bluetooth_message->data.critical_percentage;
     maximum_weight_allowed = bluetooth_message->data.maximum_weight;
@@ -585,17 +578,6 @@ void disable()
   close();
 }
 
-// Deshabilita el contenedor y notifica que se solicitó deshabilitarlo.
-void request_disabling()
-{
-  disable();
-}
-
-// Notifica que se inició el mantenimiento del contenedor.
-void send_maintenance()
-{
-}
-
 // Reinicia el sistema al estado inicial.
 void reset()
 {
@@ -651,8 +633,6 @@ void notify_state()
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
   serializeJson(doc, bluetooth_serial);
-  //doc.shrinkToFit();
-  //notify(doc);
 }
 
 void confirm_connection()
@@ -665,9 +645,6 @@ void confirm_connection()
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
   serializeJson(doc, bluetooth_serial);
-  //size_t capacity = measureJson(doc);
-  //doc.shrinkToFit();
-  //notify(doc);
 }
 
 // Notifica la ocurrencia de un error.
@@ -677,8 +654,6 @@ void error()
   doc[COMMAND_KEY_CODE] = CODE_ERROR;
   doc[COMMAND_KEY_DATA] = MESSAGE_ERROR;
   serializeJson(doc, bluetooth_serial);
-  //doc.shrinkToFit();
-  //notify(doc);
 }
 
 void calibration_started()
@@ -686,8 +661,6 @@ void calibration_started()
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_STARTED;
   serializeJson(doc, bluetooth_serial);
-  //doc.shrinkToFit();
-  //notify(doc);
 }
 
 void calibration_finished()
@@ -695,15 +668,6 @@ void calibration_finished()
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_FINISHED;
   serializeJson(doc, bluetooth_serial);
-  //doc.shrinkToFit();
-  //notify(doc);
-}
-
-void notify(DynamicJsonDocument doc)
-{
-  String serialized;
-  serializeJson(doc, serialized);
-  bluetooth_serial.println(serialized);
 }
 
 void log_current_status()

@@ -10,6 +10,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
+import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.constant.Actions;
 import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.model.BluetoothDeviceData;
@@ -168,6 +169,19 @@ public class BluetoothConnection
     public boolean isConnected(BluetoothDevice device)
     {
         return isConnected() && Objects.equals(device.getAddress(), bluetoothDevice.getAddress());
+    }
+
+    public String getDeviceName()
+    {
+        if (bluetoothDevice != null)
+        {
+            String name = bluetoothDevice.getName();
+            return name == null ? bluetoothDevice.getAddress() : name;
+        }
+        else
+        {
+            return context.getResources().getString(R.string.status_not_connected);
+        }
     }
 
     private class SocketConnectionStarter

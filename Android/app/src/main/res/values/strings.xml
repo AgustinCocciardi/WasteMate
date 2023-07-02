@@ -28,10 +28,26 @@
     <string name="label_device_address_text">AA:32:AA:21</string>
     <string name="label_device_name_text">Galaxy Nexus</string>
     <string name="list_sensors_spinner">listSensors</string>
+
+    <!--  CONFIGURACION DEL DROPDOWN DE SENSORES  -->
     <string-array name="sensors">
         <item>Flex</item>
         <item>PIR</item>
         <item>Ultrasonido</item>
     </string-array>
+    <!--  FIN DE CONFIGURACION DEL DROPDOWN DE SENSORES  -->
+
+    <!--  CONFIGURACION DE LOS DISPLAY NAME DEL ENUM Status.  -->
+    <string name="status_not_connected">DESCONECTADO</string>
+    <string name="status_unfilled">CAPACIDAD DISPONIBLE</string>
+    <string name="status_critical_capacity">CAPACIDAD CRITICA</string>
+    <string name="status_no_capacity">SIN CAPACIDAD</string>
+    <string name="status_in_maintenance">EN MANTENIMIENTO</string>
+    <string name="status_error">ERROR\n</string>
+    <string name="bluetooth_connection_required">Conexión Bluetooth requerida</string>
+    <string name="bluetooth_connection_required_message">Para el correcto funcionamiento de esta aplicación, es necesario conectarse a un dispositivo bluetooth.\nDe lo contrario, no se recibirán actualizaciones de estado ni se podrá interactuar con un contenedor.</string>
+    <string name="button_go_to_settings">Ir a Configuracion</string>
+    <string name="button_ignore">Ignorar</string>
+    <!--  FIN  CONFIGURACION DE DISPLAY NAME DEL ENUM Status  -->
 
 </resources>
