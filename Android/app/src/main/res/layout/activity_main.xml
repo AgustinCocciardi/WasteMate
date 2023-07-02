@@ -79,16 +79,16 @@
 
     <Button
         android:id="@+id/button_start_maintenance"
-        android:layout_marginTop="260dp"
-        android:layout_width="150dp"
-        android:layout_height="50dp"
+        android:layout_width="160dp"
+        android:layout_height="60dp"
         android:layout_marginStart="40dp"
+        android:layout_marginTop="260dp"
         android:layout_marginEnd="65dp"
         android:background="@drawable/ripple_button"
         android:drawableTint="@color/white"
-        android:text="INICIAR CALIBRACIÓN"
+        android:padding="10dp"
+        android:text="@string/button_start_maintenance_text"
         android:theme="@style/ButtonStyle"
-
         app:layout_constraintEnd_toEndOf="@+id/label_current_percentage_description"
         app:layout_constraintHorizontal_bias="0.66"
         app:layout_constraintStart_toStartOf="@+id/label_current_percentage_header"
@@ -96,10 +96,10 @@
 
     <Button
         android:id="@+id/button_disable"
-        android:layout_width="180dp"
-        android:layout_height="72dp"
+        android:layout_width="160dp"
+        android:layout_height="60dp"
         android:layout_marginTop="40dp"
-        android:background="@drawable/ripple_button2"
+        android:background="@drawable/ripple_button"
         android:padding="10dp"
         android:text="@string/button_disable_text"
         android:theme="@style/ButtonStyle"
@@ -110,10 +110,10 @@
 
     <Button
         android:id="@+id/button_complete_maintenance"
-        android:layout_width="180dp"
-        android:layout_height="72dp"
+        android:layout_width="160dp"
+        android:layout_height="60dp"
         android:layout_marginTop="40dp"
-        android:background="@drawable/press_effect"
+        android:background="@drawable/ripple_button"
         android:padding="10dp"
         android:text="@string/button_complete_maintenance_text"
         android:theme="@style/ButtonStyle"

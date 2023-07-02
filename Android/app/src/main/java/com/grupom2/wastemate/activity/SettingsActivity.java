@@ -410,7 +410,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
         //region Spinner
         Spinner spinnerSensors = findViewById(R.id.spinner_sensors);
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item);
         adapter.addAll(CalibrationHelpers.sensorsDictionary.keySet());
         spinnerSensors.setAdapter(adapter);
         //endregion Spinner

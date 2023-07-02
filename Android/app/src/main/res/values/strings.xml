@@ -10,7 +10,7 @@
     <string name="configuration_button_content_description">Icono de configuracion</string>
     <string name="button_disable_text">Deshabilitar contenedor</string>
     <string name="button_start_maintenance_text">Iniciar mantenimiento</string>
-    <string name="button_complete_maintenance_text">Finalizar mantinimiento</string>
+    <string name="button_complete_maintenance_text">Finalizar mantenimiento</string>
     <string name="label_status_header_text">Estado:</string>
     <string name="label_current_percentage_header_text">Porcentaje Lleno:</string>
     <string name="label_connected_device_header_text">Dispositivo conectado:</string>
@@ -48,6 +48,7 @@
     <string name="bluetooth_connection_required_message">Para el correcto funcionamiento de esta aplicación, es necesario conectarse a un dispositivo bluetooth.\nDe lo contrario, no se recibirán actualizaciones de estado ni se podrá interactuar con un contenedor.</string>
     <string name="button_go_to_settings">Ir a Configuracion</string>
     <string name="button_ignore">Ignorar</string>
+    <string name="start_calibration_text">INICIAR CALIBRACIÓN</string>
     <!--  FIN  CONFIGURACION DE DISPLAY NAME DEL ENUM Status  -->
 
 </resources>

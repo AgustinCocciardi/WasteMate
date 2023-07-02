@@ -204,7 +204,9 @@ public class MainActivity extends AppCompatActivity
             });
             builder.setNegativeButton(R.string.button_ignore, (dialog, which) ->
             {
-                showDisabled();
+                //showDisabled();
+                // TODO: CAMBIAR PARA QUE QUEDE DISABLED
+                showEnabled();
             });
             builder.setCancelable(true); // Prevent the user from dismissing the dialog without enabling Bluetooth
             builder.show();
@@ -296,7 +298,16 @@ public class MainActivity extends AppCompatActivity
 
     private void showDisabled()
     {
+        btnStartMaintenance.setEnabled(false);
+        btnCompleteMaintenance.setEnabled(false);
+        btnDisable.setEnabled(false);
+    }
 
+    public void showEnabled()
+    {
+        btnStartMaintenance.setEnabled(true);
+        btnCompleteMaintenance.setEnabled(true);
+        btnDisable.setEnabled(true);
     }
     //endregion Other Methods
 }
