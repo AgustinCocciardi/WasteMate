@@ -233,7 +233,7 @@ public class MainActivity extends AppCompatActivity
         {
             customProgressDialog.dismiss();
             bluetoothManager = BluetoothService.getInstance();
-            if(!bluetoothManager.isEnabled())
+            if (!bluetoothManager.isEnabled())
             {
                 NavigationUtil.navigateToBluetoothRequiredActivity(MainActivity.this);
             }
@@ -303,6 +303,32 @@ public class MainActivity extends AppCompatActivity
         int color = currentStatus.getDisplayColor(this);
         lblCurrentPercentage.setTextColor(color);
         lblStatusDescription.setTextColor(color);
+
+        switch (currentStatus)
+        {
+            case CRITICAL_CAPACITY:
+                btnStartMaintenance.setEnabled(false);
+                btnCompleteMaintenance.setEnabled(false);
+                btnDisable.setEnabled(true);
+                break;
+            case IN_MAINTENANCE:
+                btnStartMaintenance.setEnabled(false);
+                btnCompleteMaintenance.setEnabled(true);
+                btnDisable.setEnabled(false);
+                break;
+            case NO_CAPACITY:
+                btnStartMaintenance.setEnabled(true);
+                btnCompleteMaintenance.setEnabled(false);
+                btnDisable.setEnabled(false);
+                break;
+            case UNFILLED:
+            case NOT_CONNECTED:
+            case ERROR:
+                btnStartMaintenance.setEnabled(false);
+                btnCompleteMaintenance.setEnabled(false);
+                btnDisable.setEnabled(false);
+                break;
+        }
     }
 
     private void showDisabled()

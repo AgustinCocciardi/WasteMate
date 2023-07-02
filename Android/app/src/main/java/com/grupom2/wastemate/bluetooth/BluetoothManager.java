@@ -9,7 +9,6 @@ import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.RequiresPermission;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.gson.Gson;
 import com.grupom2.wastemate.R;
@@ -34,6 +33,8 @@ public class BluetoothManager
     private Handler handler;
 
     private BroadcastReceiver deviceConnectedBroadcastReceiver;//TODO VER SI ANDA
+    private boolean isReceiverRegistered;
+
     //endregion
     public BluetoothManager(Context context)
     {
@@ -41,13 +42,18 @@ public class BluetoothManager
         prefsManager = new BluetoothPreferencesManager(context);
         deviceConnectedBroadcastReceiver = new DeviceConnectedBroadcastReceiver();
         this.context = context;
-        BroadcastUtil.registerReceiver(context, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK); //TODO VER SI ANDA
         loadLastConnectedDevice();
     }
+
     public void connectToDevice(String deviceAddress)
     {
         disconnect();
         autoReconnect = true;
+        if (!isReceiverRegistered)
+        {
+            isReceiverRegistered = true;
+            BroadcastUtil.registerReceiver(context, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK); //TODO VER SI ANDA
+        }
         bluetoothConnection.connectToDevice(deviceAddress, commonUuid);
         startConnectionStatusMonitoring();
     }
@@ -61,7 +67,11 @@ public class BluetoothManager
     public void disconnect()
     {
         stopConnectionStatusMonitoring();
-        BroadcastUtil.unregisterReceiver(context, deviceConnectedBroadcastReceiver);//TODO VER SI ANDA
+        if (isReceiverRegistered)
+        {
+            isReceiverRegistered = false;
+            BroadcastUtil.unregisterReceiver(context, deviceConnectedBroadcastReceiver);//TODO VER SI ANDA
+        }
         bluetoothConnection.disconnect();
         isDisconnectExplicit = true;
     }

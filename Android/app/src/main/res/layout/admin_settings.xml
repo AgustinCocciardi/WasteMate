@@ -8,7 +8,9 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".Sensores">
+        tools:context=".Sensores"
+        tools:layout_editor_absoluteX="30dp"
+        tools:layout_editor_absoluteY="-16dp">
 
         <TextView
             android:id="@+id/label_weight_limit"
@@ -55,7 +57,7 @@
             android:ems="10"
             android:hint="@string/txt_weight_limit_hint"
             android:importantForAutofill="no"
-            android:inputType="numberDecimal"
+            android:inputType="number"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -69,7 +71,7 @@
             android:ems="10"
             android:hint="@string/txt_critical_capacity_hint"
             android:importantForAutofill="no"
-            android:inputType="numberDecimal"
+            android:inputType="number"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txt_weight_limit" />
@@ -98,7 +100,7 @@
             android:ems="10"
             android:hint="@string/txt_full_percentage_hint"
             android:importantForAutofill="no"
-            android:inputType="numberDecimal"
+            android:inputType="number"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txt_critical_percentage" />

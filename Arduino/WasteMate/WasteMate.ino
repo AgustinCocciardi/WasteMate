@@ -467,6 +467,9 @@ void process_command(const t_bluetooth_message *bluetooth_message)
 {
   switch (bluetooth_message->code)
   {
+    case CODE_UPDATE_REQUESTED:
+      notify_state();
+    break;
   case CODE_START_MAINTENANCE:
     current_event = EV_SM;
     break;
@@ -628,8 +631,11 @@ void show_status(t_status status)
 // Notifica el estado actual.
 void notify_state()
 {
-  DynamicJsonDocument doc(20);
+  DynamicJsonDocument doc(100);
   doc[COMMAND_KEY_CODE] = CODE_UPDATE_STATUS;
+  doc[COMMAND_KEY_CRITICAL_PERCENTAGE] = critical_percentage;
+  doc[COMMAND_KEY_FULL_PERCENTAGE] = full_percentage;
+  doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
   serializeJson(doc, bluetooth_serial);
@@ -668,6 +674,7 @@ void calibration_finished()
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_FINISHED;
   serializeJson(doc, bluetooth_serial);
+  show_status(current_state);
 }
 
 void log_current_status()

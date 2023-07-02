@@ -9,6 +9,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.text.InputFilter;
+import android.text.Spanned;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -176,16 +178,18 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     protected void onResume()
     {
         super.onResume();
-        if(bluetoothService.isConnected())
+        if (bluetoothService.isConnected())
         {
             registerSensor();
         }
     }
 
-    private void registerSensor() {
-        if(!isSensorRegistered){
+    private void registerSensor()
+    {
+        if (!isSensorRegistered)
+        {
             sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-            isSensorRegistered=true;
+            isSensorRegistered = true;
         }
     }
 
@@ -354,6 +358,13 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);//TODO: GUARDAR LOS PARAMETROS?
             handleDeviceConnectionStatus(bluetoothService.getConnectedDeviceAddress(), true);
             customProgressDialog.dismiss();
+
+            if (data != null)
+            {
+                txtMaximumWeight.setText(String.valueOf(data.getMaxAllowedWeight()));
+                txtCriticalPercentage.setText(String.valueOf(data.getCriticalPercentage() * 100));
+                txtFullPercentage.setText(String.valueOf(data.getFullPercentage() * 100));
+            }
             registerSensor();
         }
     }
@@ -372,10 +383,10 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
     private void unregisterSensor()
     {
-        if(isSensorRegistered)
+        if (isSensorRegistered)
         {
             sensor.unregisterListener(this);
-            isSensorRegistered=false;
+            isSensorRegistered = false;
         }
     }
 
@@ -419,9 +430,15 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     {
         //region Admin Settings
         adminSettingsLayout = findViewById(R.id.layoutAdminSettings);
+
         txtMaximumWeight = findViewById(R.id.txt_weight_limit);
+        //txtMaximumWeight.setFilters(new InputFilter[]{new MinMaxFilter(1, 3)});
+
         txtCriticalPercentage = findViewById(R.id.txt_critical_percentage);
+        //txtCriticalPercentage.setFilters(new InputFilter[]{new MinMaxFilter(50, 80)});
+
         txtFullPercentage = findViewById(R.id.txt_full_percentage);
+        //txtFullPercentage.setFilters(new InputFilter[]{new MinMaxFilter(50, 90)});
 
         Button btnSendSettings = findViewById(R.id.button_send_settings);
         btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
@@ -508,4 +525,48 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     }
     //endregion Other Methods
 
+}
+
+
+class MinMaxFilter implements InputFilter
+{
+    private int intMin = 0;
+    private int intMax = 0;
+
+    // Initialized
+    MinMaxFilter(int minValue, int maxValue)
+    {
+        this.intMin = minValue;
+        this.intMax = maxValue;
+    }
+
+    @Override
+    public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend)
+    {
+        try
+        {
+            int input = Integer.parseInt(dest.toString() + source.toString());
+            if (isInRange(intMin, intMax, input))
+            {
+                return null;
+            }
+        }
+        catch (NumberFormatException e)
+        {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private boolean isInRange(int a, int b, int c)
+    {
+        if (b > a)
+        {
+            return c >= a && c <= b;
+        }
+        else
+        {
+            return c >= b && c <= a;
+        }
+    }
 }

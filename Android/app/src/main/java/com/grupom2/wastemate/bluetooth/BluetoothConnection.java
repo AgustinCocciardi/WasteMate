@@ -187,6 +187,12 @@ public class BluetoothConnection
         }
     }
 
+    public BluetoothDeviceData getDeviceData()
+    {
+        return deviceData;
+    }
+
+
     @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH})
     public Set<BluetoothDevice> getBondedDevices()
     {
