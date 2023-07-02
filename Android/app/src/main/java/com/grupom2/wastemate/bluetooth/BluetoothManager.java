@@ -35,7 +35,6 @@ public class BluetoothManager
 
     private BroadcastReceiver deviceConnectedBroadcastReceiver;//TODO VER SI ANDA
     //endregion
-
     public BluetoothManager(Context context)
     {
         bluetoothConnection = new BluetoothConnection(context);
@@ -45,7 +44,6 @@ public class BluetoothManager
         BroadcastUtil.registerReceiver(context, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK); //TODO VER SI ANDA
         loadLastConnectedDevice();
     }
-
     public void connectToDevice(String deviceAddress)
     {
         disconnect();
@@ -145,7 +143,7 @@ public class BluetoothManager
         }
     }
 
-    private boolean isConnected()
+    public boolean isConnected()
     {
         return bluetoothConnection.isConnected();
     }

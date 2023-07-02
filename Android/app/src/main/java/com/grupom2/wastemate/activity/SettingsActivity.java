@@ -92,6 +92,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private static final float PRECISION_CHANGE = 20;
     private SensorManager sensor;
     private boolean showingAdminSettings;
+    private boolean isSensorRegistered;
     private BluetoothManager bluetoothService;
     private ArrayList<BluetoothDevice> pairedDevices;
     private ArrayList<BluetoothDevice> availableDevices;
@@ -175,7 +176,17 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     protected void onResume()
     {
         super.onResume();
-        sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+        if(bluetoothService.isConnected())
+        {
+            registerSensor();
+        }
+    }
+
+    private void registerSensor() {
+        if(!isSensorRegistered){
+            sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+            isSensorRegistered=true;
+        }
     }
 
     @Override
@@ -188,7 +199,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     protected void onPause()
     {
         super.onPause();
-        sensor.unregisterListener(this);
+        unregisterSensor();
     }
     //endregion Activity Life Cycle
 
@@ -310,7 +321,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     }
     //endregion Listeners
 
-
     //region Broadcast Receivers
     private class BluetoothDeviceFoundReceiver extends BroadcastReceiver
     {
@@ -344,6 +354,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);//TODO: GUARDAR LOS PARAMETROS?
             handleDeviceConnectionStatus(bluetoothService.getConnectedDeviceAddress(), true);
             customProgressDialog.dismiss();
+            registerSensor();
         }
     }
 
@@ -355,6 +366,16 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//TODO: PONER ESTE EXTRA EN ALGUN LADO?
             handleDeviceConnectionStatus(device.getAddress(), false);
             customProgressDialog.dismiss();
+            unregisterSensor();
+        }
+    }
+
+    private void unregisterSensor()
+    {
+        if(isSensorRegistered)
+        {
+            sensor.unregisterListener(this);
+            isSensorRegistered=false;
         }
     }
 
