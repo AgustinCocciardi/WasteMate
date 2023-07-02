@@ -115,7 +115,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/button_send_settings" />
 
-        <ImageButton
+        <Button
             android:id="@+id/button_start_calibration"
             android:layout_width="150dp"
             android:layout_height="50dp"

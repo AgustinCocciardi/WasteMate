@@ -6,38 +6,46 @@ import android.content.pm.PermissionInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.grupom2.wastemate.R;
+import com.grupom2.wastemate.constant.Constants;
+import com.grupom2.wastemate.util.PermissionHelper;
 
 import java.util.ArrayList;
 
-import com.grupom2.wastemate.R;
-
 public class PermissionsMissingActivity extends AppCompatActivity
 {
-    private final View.OnClickListener btnOpenConfigurationOnClickListener = new View.OnClickListener()
-    {
-        @Override
-        public void onClick(View v)
-        {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            Uri uri = Uri.fromParts("package", getPackageName(), null);
-            intent.setData(uri);
-            startActivity(intent);
-        }
-    };
+    //region Fields
+    //region Controls
+    ArrayAdapter<String> itemsAdapter;
+    //endregion Controls
 
-    @Override
-    public void onBackPressed()
+    //region Listeners
+    private final View.OnClickListener btnOpenConfigurationOnClickListener;
+    //endregion Listeners
+
+    //endregion Other Fields
+    private boolean hasAllPermissions;
+    //endregion Other Fields
+    //endregion Fields
+
+    //region Constructor
+    public PermissionsMissingActivity()
     {
-        finishAffinity();
-        finish();
+        btnOpenConfigurationOnClickListener = this::btnOpenConfigurationOnClickListener;
     }
+    //endregion Constructor
 
+    //region Overrides
+    //region Activity Life Cycle
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -46,37 +54,117 @@ public class PermissionsMissingActivity extends AppCompatActivity
         //Se asigna un layout al activity para poder vincular los distintos componentes
         setContentView(R.layout.activity_permissions_missing);
 
+        //Se configura el comportamiento del botón de abrir configuración.
         Button btnOpenConfiguration = findViewById(R.id.button);
         btnOpenConfiguration.setOnClickListener(btnOpenConfigurationOnClickListener);
 
+        //Se obtienen los permisos faltantes del intent
+        ArrayList<String> missingPermissions = getIntent().getExtras().getStringArrayList(Constants.MISSING_PERMISSIONS_KEY);
+
+        //Se cargan los permisos faltantes en el list view
         ListView listViewPermissionsMissing = findViewById(R.id.list_view_permissions_missing);
-        //get the intent in the target activity
-        Intent intent = getIntent();
+        itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
+        itemsAdapter.addAll(missingPermissionsName);
+        listViewPermissionsMissing.setAdapter(itemsAdapter);
+    }
 
-        //get the attached bundle from the intent
-        Bundle extras = intent.getExtras();
+    @Override
+    protected void onRestart()
+    {
+        super.onRestart();
 
-        //Extracting the stored data from the bundle
-        ArrayList<String> permissionsDenied = extras.getStringArrayList("deniedPermissions");
+        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
+        hasAllPermissions = missingPermissions.isEmpty();
 
+        if (hasAllPermissions)
+        {
+            onBackPressed();
+        }
+        else
+        {
+            itemsAdapter.clear();
+            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
+            itemsAdapter.addAll(missingPermissionsName);
+            itemsAdapter.notifyDataSetChanged();
+        }
+    }
+    //endregion Activity Life Cycle
+
+    //region Other Overrides
+    @Override
+    public void onBackPressed()
+    {
+        if (hasAllPermissions)
+        {
+            super.onBackPressed();
+        }
+        else
+        {
+            finishAffinity();
+            finish();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == Constants.MULTIPLE_PERMISSIONS)
+        {
+
+            ArrayList<String> deniedPermissions = new ArrayList<>();
+            boolean hasDeniedPermissions = PermissionHelper.hasDeniedPermissions(permissions, grantResults, deniedPermissions);
+            if (!hasDeniedPermissions)
+            {
+                hasAllPermissions = true;
+                onBackPressed();
+            }
+            else
+            {
+                itemsAdapter.clear();
+                ArrayList<String> missingPermissionsName = getMissingPermissionsName(deniedPermissions);
+                itemsAdapter.addAll(missingPermissionsName);
+                itemsAdapter.notifyDataSetChanged();
+            }
+        }
+    }
+    //endregion Other Overrides
+    //endregion Overrides
+
+    //region Listeners
+    private void btnOpenConfigurationOnClickListener(View v)
+    {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", getPackageName(), null);
+        intent.setData(uri);
+        startActivity(intent);
+    }
+    //endregion Listeners
+
+    //region Other Methods
+    private ArrayList<String> getMissingPermissionsName(ArrayList<String> permissionsDenied)
+    {
+        ArrayList<String> missingPermissions = new ArrayList<>();
         PackageManager packageManager = getApplicationContext().getPackageManager();
-
-        ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         for (String permission : permissionsDenied)
         {
             String permissionName;
             try
             {
+                //Se obtiene el nombre para mostrar del permiso
                 PermissionInfo permissionInfo = packageManager.getPermissionInfo(permission, 0);
                 permissionName = permissionInfo.loadLabel(packageManager).toString();
             }
             catch (PackageManager.NameNotFoundException e)
             {
+                //Si no se encuentra, se muestra el nombre por default
                 permissionName = permission;
             }
-            itemsAdapter.add(permissionName);
+            missingPermissions.add(permissionName);
         }
-
-        listViewPermissionsMissing.setAdapter(itemsAdapter);
+        return missingPermissions;
     }
+    //endregion Other Methods
 }

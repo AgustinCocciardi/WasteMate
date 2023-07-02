@@ -3,7 +3,6 @@ package com.grupom2.wastemate.activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -60,7 +59,7 @@ public class MainActivity extends AppCompatActivity
     //region BroadcastReceivers
     private final BluetoothDisabledBroadcastReceiver bluetoothDisabledBroadcastReceiver;
     private final NoDeviceConnectedBroadcastReceiver noDeviceConnectedBroadcastReceiver;
-    private ServiceStartedBroadcastReceiver serviceStartedBroadcastReceiver;
+    private final ServiceStartedBroadcastReceiver serviceStartedBroadcastReceiver;
     private final UpdateStatusBroadcastReceiver updateStatusBroadcastReceiver;
     //endregion BroadcastReceivers
 
@@ -95,7 +94,6 @@ public class MainActivity extends AppCompatActivity
 
         //Se asigna un layout a la activity para poder vincular los distintos componentes.
         setContentView(R.layout.activity_main);
-
         if (PermissionHelper.checkPermissions(this))
         {
             doCreate();
@@ -107,12 +105,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onResume();
         BroadcastUtil.registerLocalReceiver(this, noDeviceConnectedBroadcastReceiver, Actions.ACTION_NO_DEVICE_CONNECTED);
-//        if (BluetoothService.getInstance().getBluetoothConnection().isConnected())
-//        {
-//            BluetoothService.getInstance().getBluetoothConnection().getDevice() {
-//
-//        }
-//        }
+        BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
     }
 
     @Override
@@ -120,6 +113,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onStop();
         BroadcastUtil.unregisterLocalReceiver(this, noDeviceConnectedBroadcastReceiver);
+        BroadcastUtil.unregisterReceiver(this, bluetoothDisabledBroadcastReceiver);
     }
 
     @Override
@@ -128,14 +122,13 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
         BluetoothService.stopService(getApplicationContext());
         BroadcastUtil.unregisterLocalReceiver(this, serviceStartedBroadcastReceiver);
-        BroadcastUtil.unregisterReceiver(this, bluetoothDisabledBroadcastReceiver);
         BroadcastUtil.unregisterLocalReceiver(this, updateStatusBroadcastReceiver);
     }
     //endregion Activity Life Cycle
 
     //region Other Overrides
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
     {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
@@ -143,7 +136,7 @@ public class MainActivity extends AppCompatActivity
         {
 
             ArrayList<String> deniedPermissions = new ArrayList<>();
-            boolean hasDeniedPermissions = hasDeniedPermissions(permissions, grantResults, deniedPermissions);
+            boolean hasDeniedPermissions = PermissionHelper.hasDeniedPermissions(permissions, grantResults, deniedPermissions);
             if (!hasDeniedPermissions)
             {
                 if (!isInitialized)
@@ -156,18 +149,6 @@ public class MainActivity extends AppCompatActivity
                 NavigationUtil.navigateToMissingPermissionsActivity(this, deniedPermissions);
             }
         }
-    }
-
-    private static boolean hasDeniedPermissions(String[] permissions, int[] grantResults, @NonNull ArrayList<String> deniedPermissions)
-    {
-        for (int i = 0; i < permissions.length; i++)
-        {
-            if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
-            {
-                deniedPermissions.add(permissions[i]);
-            }
-        }
-        return deniedPermissions.isEmpty();
     }
     //endregion Other Overrides
     //endregion Overrides
@@ -203,76 +184,6 @@ public class MainActivity extends AppCompatActivity
     }
     //endregion Listeners
 
-    //region Other Methods
-    private void doCreate()
-    {
-        isInitialized = true;
-
-        /* Se inicia el proceso de creación del servicio.
-           Esto todavía no garantiza que el servicio esté creado. */
-        startService();
-
-        // Se vinculan los controles a su correspondiente layout y se les asignan los listeners.
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        lblStatusDescription = findViewById(R.id.label_status_description);
-
-        lblCurrentPercentage = findViewById(R.id.label_current_percentage_description);
-
-        ImageButton btnRefresh = findViewById(R.id.button_refresh_status);
-        btnRefresh.setOnClickListener(btnRefreshOnClickListener);
-
-        ImageView btnSettings = findViewById(R.id.button_settings);
-        btnSettings.setOnClickListener(btnSettingsOnClickListener);
-
-        btnStartMaintenance = findViewById(R.id.button_start_maintenance);
-        btnStartMaintenance.setOnClickListener(btnStartMaintenanceOnClickListener);
-
-        btnCompleteMaintenance = findViewById(R.id.button_complete_maintenance);
-        btnCompleteMaintenance.setOnClickListener(btnCompleteMaintenanceOnClickListener);
-
-        btnDisable = findViewById(R.id.button_disable);
-        btnDisable.setOnClickListener(btnDisableOnClickListener);
-
-        // Se registran los broadcast receiver que deben estar mientras la activity no sea destruida.
-        BroadcastUtil.registerLocalReceiver(this,
-                serviceStartedBroadcastReceiver,
-                Actions.ACTION_SERVICE_CONNECTED);
-
-        BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
-
-        BroadcastUtil.registerLocalReceiver(this,
-                updateStatusBroadcastReceiver,
-                Actions.ACTION_UPDATE, Actions.ACTION_ACK);
-    }
-
-    private void startService()
-    {
-        BluetoothService.startService(getApplicationContext());
-        customProgressDialog = new CustomProgressDialog(MainActivity.this);
-        customProgressDialog.show();
-    }
-
-    void updateLabels(BluetoothDeviceData deviceData)
-    {
-        Status currentStatus = Arrays.stream(Status.values())
-                .filter(status -> Objects.equals(status.getValue(), deviceData.getStatus()))
-                .findFirst()
-                .orElse(Status.ERROR);
-        lblStatusDescription.setText(currentStatus.getDisplayName(this));
-        lblCurrentPercentage.setText(new DecimalFormat("#0.00%").format(deviceData.getCurrentPercentage()));
-        int color = currentStatus.getDisplayColor(this);
-        lblCurrentPercentage.setTextColor(color);
-        lblStatusDescription.setTextColor(color);
-    }
-
-    private void showDisabled()
-    {
-
-    }
-    //endregion Other Methods
-
     //region Broadcast Receivers
     private class NoDeviceConnectedBroadcastReceiver extends BroadcastReceiver
     {
@@ -306,7 +217,10 @@ public class MainActivity extends AppCompatActivity
         public void onReceive(Context context, Intent intent)
         {
             BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);
-            updateLabels(data);
+            if (data != null)
+            {
+                updateLabels(data);
+            }
         }
     }
 
@@ -320,4 +234,69 @@ public class MainActivity extends AppCompatActivity
         }
     }
     //endregion Broadcast Receivers
+
+    //region Other Methods
+    private void doCreate()
+    {
+        isInitialized = true;
+
+        /* Se inicia el proceso de creación del servicio.
+           Esto todavía no garantiza que el servicio esté creado. */
+        startService();
+
+        // Se vinculan los controles a su correspondiente layout y se les asignan los listeners.
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        lblStatusDescription = findViewById(R.id.label_status_description);
+
+        lblCurrentPercentage = findViewById(R.id.label_current_percentage_description);
+
+        ImageButton btnRefresh = findViewById(R.id.button_refresh_status);
+        btnRefresh.setOnClickListener(btnRefreshOnClickListener);
+
+        ImageView btnSettings = findViewById(R.id.button_settings);
+        btnSettings.setOnClickListener(btnSettingsOnClickListener);
+
+        btnStartMaintenance = findViewById(R.id.button_start_maintenance);
+        btnStartMaintenance.setOnClickListener(btnStartMaintenanceOnClickListener);
+
+        btnCompleteMaintenance = findViewById(R.id.button_complete_maintenance);
+        btnCompleteMaintenance.setOnClickListener(btnCompleteMaintenanceOnClickListener);
+
+        btnDisable = findViewById(R.id.button_disable);
+        btnDisable.setOnClickListener(btnDisableOnClickListener);
+
+        // Se registran los broadcast receiver que deben estar mientras la activity no sea destruida.
+        BroadcastUtil.registerLocalReceiver(this, serviceStartedBroadcastReceiver, Actions.ACTION_SERVICE_CONNECTED);
+
+
+        BroadcastUtil.registerLocalReceiver(this, updateStatusBroadcastReceiver, Actions.ACTION_UPDATE, Actions.ACTION_ACK);
+    }
+
+    private void startService()
+    {
+        BluetoothService.startService(getApplicationContext());
+        customProgressDialog = new CustomProgressDialog(MainActivity.this);
+        customProgressDialog.show();
+    }
+
+    void updateLabels(BluetoothDeviceData deviceData)
+    {
+        Status currentStatus = Arrays.stream(Status.values())
+                .filter(status -> Objects.equals(status.getValue(), deviceData.getStatus()))
+                .findFirst()
+                .orElse(Status.ERROR);
+        lblStatusDescription.setText(currentStatus.getDisplayName(this));
+        lblCurrentPercentage.setText(new DecimalFormat("#0.00%").format(deviceData.getCurrentPercentage()));
+        int color = currentStatus.getDisplayColor(this);
+        lblCurrentPercentage.setTextColor(color);
+        lblStatusDescription.setTextColor(color);
+    }
+
+    private void showDisabled()
+    {
+
+    }
+    //endregion Other Methods
 }

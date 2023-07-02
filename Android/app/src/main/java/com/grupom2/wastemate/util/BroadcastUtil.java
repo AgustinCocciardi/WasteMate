@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.grupom2.wastemate.receiver.FilteredBroadcastReceiver;
@@ -26,6 +27,7 @@ public class BroadcastUtil
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
+    @Nullable
     public static <T extends Serializable> T getData(Intent intent, Class<T> type)
     {
         Bundle extras = intent.getExtras();

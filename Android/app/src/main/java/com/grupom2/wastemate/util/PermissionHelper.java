@@ -94,7 +94,7 @@ public class PermissionHelper
 
     public static boolean checkPermissions(Activity context)
     {
-        List<String> permissionsMissing = getPermissionsMissing(context);
+        ArrayList<String> permissionsMissing = getPermissionsMissing(context);
 
         boolean hasAllPermissions;
         if (!permissionsMissing.isEmpty())
@@ -116,9 +116,9 @@ public class PermissionHelper
     }
 
     @NonNull
-    private static List<String> getPermissionsMissing(Context context)
+    public static ArrayList<String> getPermissionsMissing(Context context)
     {
-        List<String> permissionsMissing = new ArrayList<>();
+        ArrayList<String> permissionsMissing = new ArrayList<>();
 
         for (String p : getPermissionsNeeded())
         {
@@ -129,5 +129,35 @@ public class PermissionHelper
             }
         }
         return permissionsMissing;
+    }
+
+    public static boolean hasDeniedPermissions(String[] permissions, int[] grantResults, @NonNull ArrayList<String> deniedPermissions)
+    {
+        for (int i = 0; i < permissions.length; i++)
+        {
+            if (grantResults[i] != PackageManager.PERMISSION_GRANTED)
+            {
+                deniedPermissions.add(permissions[i]);
+            }
+        }
+        return !deniedPermissions.isEmpty();
+    }
+
+    public static boolean isAnyPermissionGranted(Context context, ArrayList<String> permissions, @NonNull ArrayList<String> missingPermissions)
+    {
+        for (String permission : permissions)
+        {
+            int result = context.checkCallingOrSelfPermission(permission);
+            if (result == PackageManager.PERMISSION_GRANTED)
+            {
+                return true;
+            }
+            else
+            {
+                missingPermissions.add(permission);
+            }
+        }
+
+        return missingPermissions.isEmpty();
     }
 }

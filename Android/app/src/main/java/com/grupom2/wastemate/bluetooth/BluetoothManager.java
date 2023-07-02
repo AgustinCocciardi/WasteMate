@@ -1,24 +1,30 @@
 package com.grupom2.wastemate.bluetooth;
 
-import android.bluetooth.BluetoothAdapter;
+import android.Manifest;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.RequiresPermission;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.google.gson.Gson;
+import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.constant.Actions;
+import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.util.BroadcastUtil;
 
+import java.util.Set;
 import java.util.UUID;
 
 public class BluetoothManager
 {
-    private BluetoothAdapter bluetoothAdapter;
-    private BluetoothConnection bluetoothConnection;
-    private BluetoothPreferencesManager prefsManager;
-    private UUID YOUR_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private final BluetoothConnection bluetoothConnection;
+    private final BluetoothPreferencesManager prefsManager;
+    private final UUID commonUuid = UUID.fromString(Constants.COMMON_UUID_STRING);
 
     //region Auto Reconnect
     private boolean autoReconnect = true;
@@ -26,15 +32,17 @@ public class BluetoothManager
     private static final long RECONNECT_DELAY = 3000; // 3 seconds
     private Context context;
     private Handler handler;
-    //endregion
 
+    private BroadcastReceiver deviceConnectedBroadcastReceiver;//TODO VER SI ANDA
+    //endregion
 
     public BluetoothManager(Context context)
     {
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bluetoothConnection = new BluetoothConnection(context);
         prefsManager = new BluetoothPreferencesManager(context);
+        deviceConnectedBroadcastReceiver = new DeviceConnectedBroadcastReceiver();
         this.context = context;
+        BroadcastUtil.registerReceiver(context, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK); //TODO VER SI ANDA
         loadLastConnectedDevice();
     }
 
@@ -42,9 +50,8 @@ public class BluetoothManager
     {
         disconnect();
         autoReconnect = true;
-        bluetoothConnection.connectToDevice(deviceAddress, YOUR_UUID);
+        bluetoothConnection.connectToDevice(deviceAddress, commonUuid);
         startConnectionStatusMonitoring();
-
     }
 
     public void write(Object data)
@@ -56,6 +63,7 @@ public class BluetoothManager
     public void disconnect()
     {
         stopConnectionStatusMonitoring();
+        BroadcastUtil.unregisterReceiver(context, deviceConnectedBroadcastReceiver);//TODO VER SI ANDA
         bluetoothConnection.disconnect();
         isDisconnectExplicit = true;
     }
@@ -144,7 +152,53 @@ public class BluetoothManager
 
     public BluetoothConnection getBluetoothConnection()
     {
+
         return bluetoothConnection;
+    }
+
+    public String getConnectedDeviceName()
+    {
+        String deviceName;
+        if (bluetoothConnection.isConnected())
+        {
+            deviceName = bluetoothConnection.getDeviceName();
+        }
+        else
+        {
+            deviceName = context.getResources().getString(R.string.status_not_connected);
+        }
+        return deviceName;
+    }
+
+    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH})
+    public Set<BluetoothDevice> getBondedDevices()
+    {
+        return bluetoothConnection.getBondedDevices();
+    }
+
+    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN})
+    public void startDiscovery()
+    {
+        bluetoothConnection.startDiscovery();
+    }
+
+    public void refresh()
+    {
+        bluetoothConnection.refreshAdapter();
+    }
+
+    public String getConnectedDeviceAddress()
+    {
+        return bluetoothConnection.getDeviceAddress();
+    }
+
+    private class DeviceConnectedBroadcastReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            saveLastConnectedDevice(bluetoothConnection.getDeviceAddress()); //TODO: VALIDAR SI ANDA.
+        }
     }
 }
 

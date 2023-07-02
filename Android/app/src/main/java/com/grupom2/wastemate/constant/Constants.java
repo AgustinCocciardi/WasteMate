@@ -1,5 +1,7 @@
 package com.grupom2.wastemate.constant;
 
+import android.content.Intent;
+
 import com.grupom2.wastemate.R;
 
 public class Constants
@@ -19,4 +21,8 @@ public class Constants
     public static final int CODE_CALIBRATE_MAXIMUM_CAPACITY = 92;
     public static final int CODE_CALIBRATE_WEIGHT = 93;
     public static final int MULTIPLE_PERMISSIONS = 10;
+    public static final String  ANDROID_ACTION_REQUEST_ENABLE_BLUETOOTH = "android.bluetooth.adapter.action.REQUEST_ENABLE";
+    public static final String BLUETOOTH_DEVICE_METHOD_CREATE_BOND = "createBond";
+    public static final String BLUETOOTH_DEVICE_METHOD_REMOVE_BOND = "removeBond";
+    public static final String COMMON_UUID_STRING = "00001101-0000-1000-8000-00805F9B34FB";
 }

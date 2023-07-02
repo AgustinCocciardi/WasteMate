@@ -10,6 +10,8 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
+import androidx.annotation.RequiresPermission;
+
 import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.constant.Actions;
 import com.grupom2.wastemate.constant.Constants;
@@ -26,6 +28,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public class BluetoothConnection
@@ -184,6 +187,23 @@ public class BluetoothConnection
         }
     }
 
+    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH})
+    public Set<BluetoothDevice> getBondedDevices()
+    {
+        return bluetoothAdapter.getBondedDevices();
+    }
+
+    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN})
+    public void startDiscovery()
+    {
+        bluetoothAdapter.startDiscovery();
+    }
+
+    public void refreshAdapter()
+    {
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
     private class SocketConnectionStarter
     {
         private HandlerThread handlerThread;
@@ -272,8 +292,6 @@ public class BluetoothConnection
             //TODO: improve this.
             if (ackReceived)
             {
-                BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_ACK, deviceData);
-                removeCallbacksAndMessages(null);
                 return;
             }
             if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS)
