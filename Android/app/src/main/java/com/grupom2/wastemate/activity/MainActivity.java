@@ -1,4 +1,4 @@
-package com.grupom2.wastemate.activity.mainactivity;
+package com.grupom2.wastemate.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

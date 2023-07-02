@@ -2,12 +2,10 @@ package com.grupom2.wastemate.util;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 
 import com.grupom2.wastemate.activity.BluetoothDisabledActivity;
 import com.grupom2.wastemate.activity.PermissionsMissingActivity;
 import com.grupom2.wastemate.activity.SettingsActivity;
-import com.grupom2.wastemate.activity.mainactivity.MainActivity;
 import com.grupom2.wastemate.constant.Constants;
 
 import java.util.ArrayList;
