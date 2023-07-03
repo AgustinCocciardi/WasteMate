@@ -31,31 +31,27 @@ public class BluetoothManager
     private static final long RECONNECT_DELAY = 3000; // 3 seconds
     private Context context;
     private Handler handler;
-
-    private BroadcastReceiver deviceConnectedBroadcastReceiver;//TODO VER SI ANDA
-    private boolean isReceiverRegistered;
+    private boolean isConnected;
 
     //endregion
     public BluetoothManager(Context context)
     {
         bluetoothConnection = new BluetoothConnection(context);
         prefsManager = new BluetoothPreferencesManager(context);
-        deviceConnectedBroadcastReceiver = new DeviceConnectedBroadcastReceiver();
         this.context = context;
         loadLastConnectedDevice();
     }
 
     public void connectToDevice(String deviceAddress)
     {
-        disconnect();
-        autoReconnect = true;
-        if (!isReceiverRegistered)
+        if (isConnected)
         {
-            isReceiverRegistered = true;
-            BroadcastUtil.registerReceiver(context, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK); //TODO VER SI ANDA
+            disconnect();
         }
+        autoReconnect = true;
         bluetoothConnection.connectToDevice(deviceAddress, commonUuid);
         startConnectionStatusMonitoring();
+        isConnected = true;
     }
 
     public void write(Object data)
@@ -66,29 +62,27 @@ public class BluetoothManager
 
     public void disconnect()
     {
-        stopConnectionStatusMonitoring();
-        if (isReceiverRegistered)
+        if (isConnected)
         {
-            isReceiverRegistered = false;
-            BroadcastUtil.unregisterReceiver(context, deviceConnectedBroadcastReceiver);//TODO VER SI ANDA
+            stopConnectionStatusMonitoring();
+            bluetoothConnection.disconnect();
+            isDisconnectExplicit = true;
+            isConnected = false;
         }
-        bluetoothConnection.disconnect();
-        isDisconnectExplicit = true;
     }
 
     public void disconnectAndForget()
     {
         disconnect();
         BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_NO_DEVICE_CONNECTED, null);
-        removeLastConnectedDevice();
     }
 
-    private void saveLastConnectedDevice(String deviceAddress)
+    public void saveLastConnectedDevice(String deviceAddress)
     {
         prefsManager.saveLastConnectedDevice(deviceAddress);
     }
 
-    private void removeLastConnectedDevice()
+    public void removeLastConnectedDevice()
     {
         prefsManager.removeLastConnectedDevice();
     }
@@ -203,15 +197,6 @@ public class BluetoothManager
     public boolean isEnabled()
     {
         return bluetoothConnection.getAdapter().isEnabled();
-    }
-
-    private class DeviceConnectedBroadcastReceiver extends BroadcastReceiver
-    {
-        @Override
-        public void onReceive(Context context, Intent intent)
-        {
-            saveLastConnectedDevice(bluetoothConnection.getDeviceAddress()); //TODO: VALIDAR SI ANDA.
-        }
     }
 }
 

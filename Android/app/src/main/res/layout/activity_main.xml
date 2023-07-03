@@ -55,27 +55,34 @@
 
     <ImageButton
         android:id="@+id/button_refresh_status"
-        android:layout_width="41dp"
-        android:layout_height="41dp"
-        android:layout_marginStart="8dp"
-
-        android:background="@drawable/baseline_refresh_24"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/ripple_button_white"
+        android:contentDescription="@string/button_refresh_status_content_description"
         app:layout_constraintBottom_toBottomOf="@+id/label_status_description"
-        app:layout_constraintStart_toEndOf="@+id/label_status_description"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/label_status_description"
-        android:contentDescription="@string/button_refresh_status_content_description" />
+        app:layout_constraintVertical_bias="0.434"
+        app:drawableEnabledImage="@drawable/baseline_refresh_24_white"
+        app:drawableDisabledImage="@drawable/baseline_refresh_24_black"/>
+
 
     <TextView
         android:id="@+id/label_status_description"
-        android:layout_width="237dp"
-        android:layout_height="25dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="100dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:maxLines="2"
         android:text=""
         android:textAlignment="textStart"
         android:textSize="20sp"
+
+        app:layout_constraintBottom_toBottomOf="@+id/label_status_header"
+        app:layout_constraintEnd_toStartOf="@+id/button_refresh_status"
         app:layout_constraintStart_toEndOf="@+id/label_status_header"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+        app:layout_constraintTop_toTopOf="@+id/label_status_header" />
 
     <Button
         android:id="@+id/button_start_maintenance"
@@ -126,12 +133,11 @@
         android:id="@+id/label_status_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="150dp"
         android:text="@string/label_status_header_text"
         android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="@+id/label_status_description"
         app:layout_constraintStart_toStartOf="@+id/label_connected_device_header"
-        app:layout_constraintTop_toTopOf="@+id/label_status_description"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/label_current_percentage_header"

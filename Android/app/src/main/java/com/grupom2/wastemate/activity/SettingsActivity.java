@@ -95,7 +95,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private SensorManager sensor;
     private boolean showingAdminSettings;
     private boolean isSensorRegistered;
-    private BluetoothManager bluetoothService;
+    private static BluetoothManager bluetoothService;
     private ArrayList<BluetoothDevice> pairedDevices;
     private ArrayList<BluetoothDevice> availableDevices;
     //endregion Other Fields
@@ -272,6 +272,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         {
             try
             {
+                disconnect();
                 Method method = model.getClass().getMethod(Constants.BLUETOOTH_DEVICE_METHOD_REMOVE_BOND, (Class[]) null);
                 method.invoke(model, (Object[]) null);
             }
@@ -280,6 +281,12 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                 e.printStackTrace();
             }
         }
+    }
+
+    private static void disconnect()
+    {
+        bluetoothService.removeLastConnectedDevice();
+        bluetoothService.disconnectAndForget();
     }
 
     private void btnStartCalibrationOnClickListener(View v)
@@ -315,7 +322,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         {
             if (bluetoothService.getBluetoothConnection().isConnected(device))
             {
-                bluetoothService.disconnectAndForget();
+                disconnect();
             }
             else
             {

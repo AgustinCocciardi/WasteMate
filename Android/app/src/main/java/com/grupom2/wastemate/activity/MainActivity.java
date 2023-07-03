@@ -1,5 +1,6 @@
 package com.grupom2.wastemate.activity;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -41,11 +42,14 @@ public class MainActivity extends AppCompatActivity
     //region Fields
     //region Controls
     CustomProgressDialog customProgressDialog;
+    private TextView lblConnectedDeviceName;
     private TextView lblStatusDescription;
-    private TextView lblCurrentPercentage;
+    private TextView lblCurrentPercentageHeader;
+    private TextView lblCurrentPercentageDescription;
     private Button btnStartMaintenance;
     private Button btnCompleteMaintenance;
     private Button btnDisable;
+    private ImageButton btnRefresh;
     //endregion Controls
 
     //region Listeners
@@ -59,13 +63,16 @@ public class MainActivity extends AppCompatActivity
     //region BroadcastReceivers
     private final BluetoothDisabledBroadcastReceiver bluetoothDisabledBroadcastReceiver;
     private final NoDeviceConnectedBroadcastReceiver noDeviceConnectedBroadcastReceiver;
+    private final BroadcastReceiver deviceConnectedBroadcastReceiver;
     private final ServiceStartedBroadcastReceiver serviceStartedBroadcastReceiver;
     private final UpdateStatusBroadcastReceiver updateStatusBroadcastReceiver;
+    private final BroadcastReceiver bluetoothDeviceDisconnectedReceiver;
     //endregion BroadcastReceivers
 
     //region Other Fields
     private BluetoothManager bluetoothManager;
     private boolean isInitialized;
+
     //endregion Other Fields
     //endregion Fields
 
@@ -82,6 +89,8 @@ public class MainActivity extends AppCompatActivity
         serviceStartedBroadcastReceiver = new ServiceStartedBroadcastReceiver();
         updateStatusBroadcastReceiver = new UpdateStatusBroadcastReceiver();
         isInitialized = false;
+        deviceConnectedBroadcastReceiver = new DeviceConnectedBroadcastReceiver();
+        bluetoothDeviceDisconnectedReceiver = new DeviceDisconnectedBroadcastReceiver();
     }
     //endregion Constructor
 
@@ -123,6 +132,7 @@ public class MainActivity extends AppCompatActivity
         BluetoothService.stopService(getApplicationContext());
         BroadcastUtil.unregisterLocalReceiver(this, serviceStartedBroadcastReceiver);
         BroadcastUtil.unregisterLocalReceiver(this, updateStatusBroadcastReceiver);
+        BroadcastUtil.unregisterReceiver(this, bluetoothDeviceDisconnectedReceiver);
     }
     //endregion Activity Life Cycle
 
@@ -190,10 +200,11 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            showBluetoothConnectionDialog();
+            showDisconnected();
+            showBluetoothConnectionMissingDialog();
         }
 
-        private void showBluetoothConnectionDialog()
+        private void showBluetoothConnectionMissingDialog()
         {
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle(R.string.bluetooth_connection_required);
@@ -204,12 +215,34 @@ public class MainActivity extends AppCompatActivity
             });
             builder.setNegativeButton(R.string.button_ignore, (dialog, which) ->
             {
-                //showDisabled();
-                // TODO: CAMBIAR PARA QUE QUEDE DISABLED
-                showEnabled();
             });
-            builder.setCancelable(true); // Prevent the user from dismissing the dialog without enabling Bluetooth
+            builder.setCancelable(false); // Prevent the user from dismissing the dialog without enabling Bluetooth
             builder.show();
+        }
+    }
+
+    private class DeviceConnectedBroadcastReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            showEnabled();
+            bluetoothManager.saveLastConnectedDevice(bluetoothManager.getConnectedDeviceAddress());
+            lblConnectedDeviceName.setText(bluetoothManager.getConnectedDeviceName());
+            BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);
+            if (data != null)
+            {
+                updateLabels(data);
+            }
+        }
+    }
+
+    private class DeviceDisconnectedBroadcastReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            showDisconnected();
         }
     }
 
@@ -218,6 +251,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent)
         {
+            lblConnectedDeviceName.setText(bluetoothManager.getConnectedDeviceName());
             BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);
             if (data != null)
             {
@@ -250,9 +284,14 @@ public class MainActivity extends AppCompatActivity
     {
         isInitialized = true;
 
-        /* Se inicia el proceso de creación del servicio.
-           Esto todavía no garantiza que el servicio esté creado. */
-        startService();
+        // Se registran los broadcast receiver que deben estar mientras la activity no sea destruida.
+        BroadcastUtil.registerLocalReceiver(this, serviceStartedBroadcastReceiver, Actions.ACTION_SERVICE_CONNECTED);
+
+        BroadcastUtil.registerLocalReceiver(this, updateStatusBroadcastReceiver, Actions.ACTION_UPDATE);
+
+        BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK);
+
+        BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
 
         // Se vinculan los controles a su correspondiente layout y se les asignan los listeners.
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -260,9 +299,12 @@ public class MainActivity extends AppCompatActivity
 
         lblStatusDescription = findViewById(R.id.label_status_description);
 
-        lblCurrentPercentage = findViewById(R.id.label_current_percentage_description);
+        lblCurrentPercentageHeader = findViewById(R.id.label_current_percentage_header);
+        lblCurrentPercentageDescription = findViewById(R.id.label_current_percentage_description);
 
-        ImageButton btnRefresh = findViewById(R.id.button_refresh_status);
+        lblConnectedDeviceName = findViewById(R.id.label_connected_device_name);
+
+        btnRefresh = findViewById(R.id.button_refresh_status);
         btnRefresh.setOnClickListener(btnRefreshOnClickListener);
 
         ImageView btnSettings = findViewById(R.id.button_settings);
@@ -277,11 +319,11 @@ public class MainActivity extends AppCompatActivity
         btnDisable = findViewById(R.id.button_disable);
         btnDisable.setOnClickListener(btnDisableOnClickListener);
 
-        // Se registran los broadcast receiver que deben estar mientras la activity no sea destruida.
-        BroadcastUtil.registerLocalReceiver(this, serviceStartedBroadcastReceiver, Actions.ACTION_SERVICE_CONNECTED);
+        showConnecting();
 
-        BroadcastUtil.registerLocalReceiver(this, updateStatusBroadcastReceiver, Actions.ACTION_UPDATE, Actions.ACTION_ACK);
-
+                /* Se inicia el proceso de creación del servicio.
+           Esto todavía no garantiza que el servicio esté creado. */
+        startService();
 
     }
 
@@ -299,9 +341,9 @@ public class MainActivity extends AppCompatActivity
                 .findFirst()
                 .orElse(Status.ERROR);
         lblStatusDescription.setText(currentStatus.getDisplayName(this));
-        lblCurrentPercentage.setText(new DecimalFormat("#0.00%").format(deviceData.getCurrentPercentage()));
+        lblCurrentPercentageDescription.setText(new DecimalFormat("#0.00%").format(deviceData.getCurrentPercentage()));
         int color = currentStatus.getDisplayColor(this);
-        lblCurrentPercentage.setTextColor(color);
+        lblCurrentPercentageDescription.setTextColor(color);
         lblStatusDescription.setTextColor(color);
 
         switch (currentStatus)
@@ -331,18 +373,40 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void showDisabled()
+    private void showDisconnected()
     {
+        lblStatusDescription.setText("Desconectado");
+        lblStatusDescription.setTextColor(getApplicationContext().getColor(R.color.grey));
+        lblConnectedDeviceName.setText("Ningun Dispositivo Conectado");
+        lblCurrentPercentageDescription.setVisibility(View.INVISIBLE);
+        lblCurrentPercentageHeader.setVisibility(View.INVISIBLE);
         btnStartMaintenance.setEnabled(false);
         btnCompleteMaintenance.setEnabled(false);
         btnDisable.setEnabled(false);
+        btnRefresh.setEnabled(false);
+    }
+
+    private void showConnecting()
+    {
+        lblStatusDescription.setText("Conectando");
+        lblStatusDescription.setTextColor(getApplicationContext().getColor(R.color.teal_700));
+        lblConnectedDeviceName.setText("No Reconocido");
+        lblCurrentPercentageDescription.setVisibility(View.INVISIBLE);
+        lblCurrentPercentageHeader.setVisibility(View.INVISIBLE);
+        btnStartMaintenance.setEnabled(false);
+        btnCompleteMaintenance.setEnabled(false);
+        btnDisable.setEnabled(false);
+        btnRefresh.setEnabled(false);
     }
 
     public void showEnabled()
     {
+        lblCurrentPercentageHeader.setVisibility(View.VISIBLE);
+        lblCurrentPercentageDescription.setVisibility(View.VISIBLE);
         btnStartMaintenance.setEnabled(true);
         btnCompleteMaintenance.setEnabled(true);
         btnDisable.setEnabled(true);
+        btnRefresh.setEnabled(true);
     }
     //endregion Other Methods
 }
