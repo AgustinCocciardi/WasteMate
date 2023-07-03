@@ -1,6 +1,5 @@
 package com.grupom2.wastemate.bluetooth;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -10,8 +9,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 
-import androidx.annotation.RequiresPermission;
-
 import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.constant.Actions;
 import com.grupom2.wastemate.constant.Constants;
@@ -19,8 +16,6 @@ import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.model.BluetoothMessage;
 import com.grupom2.wastemate.model.BluetoothMessageResponse;
 import com.grupom2.wastemate.util.BroadcastUtil;
-import com.grupom2.wastemate.util.NavigationUtil;
-import com.grupom2.wastemate.util.PermissionHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,12 +34,13 @@ public class BluetoothConnection
     private BluetoothSocket bluetoothSocket;
     private SocketReader socketReader;
     private SocketConnectionStarter socketConnectionStarter;
-    private BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private Context context;
+    private final BluetoothAdapter bluetoothAdapter;
+    private final Context context;
 
     public BluetoothConnection(Context context)
     {
         this.context = context;
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
     public void connectToDevice(String deviceAddress, UUID uuid)
@@ -152,6 +148,7 @@ public class BluetoothConnection
         }
         catch (IOException e)
         {
+            //TODO: HANDLE EXCEPTION
         }
         return response;
     }
@@ -164,17 +161,12 @@ public class BluetoothConnection
         }
     }
 
-    public BluetoothAdapter getAdapter()
-    {
-        return bluetoothAdapter;
-    }
-
     public boolean isConnected(BluetoothDevice device)
     {
         return isConnected() && Objects.equals(device.getAddress(), bluetoothDevice.getAddress());
     }
 
-    public String getDeviceName()
+    public String getDeviceName() throws SecurityException
     {
         if (bluetoothDevice != null)
         {
@@ -187,35 +179,27 @@ public class BluetoothConnection
         }
     }
 
-    public BluetoothDeviceData getDeviceData()
-    {
-        return deviceData;
-    }
-
-
-    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH})
-    public Set<BluetoothDevice> getBondedDevices()
+    public Set<BluetoothDevice> getBondedDevices() throws SecurityException
     {
         return bluetoothAdapter.getBondedDevices();
     }
 
-    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN})
-    public void startDiscovery()
+    public void startDiscovery() throws SecurityException
     {
         bluetoothAdapter.startDiscovery();
     }
 
-    public void refreshAdapter()
+    public boolean isEnabled()
     {
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
     }
 
     private class SocketConnectionStarter
     {
         private HandlerThread handlerThread;
         private ConnectionHandler handler;
-        private String deviceAddress;
-        private UUID uuid;
+        private final String deviceAddress;
+        private final UUID uuid;
 
         public SocketConnectionStarter(String deviceAddress, UUID uuid)
         {
@@ -225,45 +209,38 @@ public class BluetoothConnection
 
         public void start()
         {
-
-            if (PermissionHelper.isPermissionGranted(context, Manifest.permission.BLUETOOTH_CONNECT))
+            handlerThread = new HandlerThread("SocketConnectionStarter");
+            handlerThread.start();
+            Handler socketConnectionHandler = new Handler(handlerThread.getLooper())
             {
-                handlerThread = new HandlerThread("SocketConnectionStarter");
-                handlerThread.start();
-                Handler socketConnectionHandler = new Handler(handlerThread.getLooper())
+                @Override
+                public void handleMessage(Message msg) throws SecurityException
                 {
-                    @Override
-                    public void handleMessage(Message msg)
+                    try
                     {
-                        try
-                        {
-                            bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress);
-                            //TODO: VALIDAR SI LA VERIFICACION DE PERMISOS ANDA. SI ANDA, SUPRIMIR WARNING.
-                            bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
-                            bluetoothSocket.connect();
-                            write(new BluetoothMessage(Constants.CODE_CONNECTION_REQUESTED).Serialize());
-                            handler = new ConnectionHandler(handlerThread.getLooper());
-                            handler.sendEmptyMessage(0);
-                        }
-                        catch (IOException e)
-                        {
-                            e.printStackTrace();
-                            //TODO: MANAGE EXCEPTION  - CONNECION FAILED.
-                        }
+                        bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress);
+                        //TODO: VALIDAR SI LA VERIFICACION DE PERMISOS ANDA. SI ANDA, SUPRIMIR WARNING.
+                        bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+                        bluetoothSocket.connect();
+                        write(new BluetoothMessage(Constants.CODE_CONNECTION_REQUESTED).Serialize());
+                        handler = new ConnectionHandler(handlerThread.getLooper());
+                        handler.sendEmptyMessage(0);
                     }
-                };
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                        //TODO: MANAGE EXCEPTION  - CONNECTION FAILED.
+                    }
+                    catch (SecurityException e)
+                    {
+                        //TODO: HANDLE EXCEPTION
 
-                // Post a message to the Handler to start the processing
-                socketConnectionHandler.sendEmptyMessage(0);
+                    }
+                }
+            };
 
-            }
-            else
-            {
-                NavigationUtil.navigateToMissingPermissionsActivity(context, new ArrayList<String>()
-                {{
-                    add(Manifest.permission.BLUETOOTH_CONNECT);
-                }});
-            }
+            // Post a message to the Handler to start the processing
+            socketConnectionHandler.sendEmptyMessage(0);
         }
 
         public void stop()
@@ -317,7 +294,7 @@ public class BluetoothConnection
                     {
                         ArrayList<BluetoothMessageResponse> read = read(inputStream);
 
-                        if (read != null && !read.isEmpty())
+                        if (!read.isEmpty())
                         {
                             BluetoothMessageResponse response = read.stream().filter(r -> Objects.equals(r.getCode(), Constants.CODE_ACK)).findFirst().orElse(null);
                             if (response != null)
@@ -388,7 +365,7 @@ public class BluetoothConnection
                 try
                 {
                     ArrayList<BluetoothMessageResponse> read = read(bluetoothSocket.getInputStream());
-                    if (read != null && !read.isEmpty())
+                    if (!read.isEmpty())
                     {
                         for (BluetoothMessageResponse response : read)
                         {

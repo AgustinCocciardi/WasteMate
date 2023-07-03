@@ -49,6 +49,10 @@
     <string name="button_go_to_settings">Ir a Configuracion</string>
     <string name="button_ignore">Ignorar</string>
     <string name="start_calibration_text">INICIAR CALIBRACIÓN</string>
+    <string name="lbl_status_description_disconnected">Desconectado</string>
+    <string name="lbl_connected_device_description_no_device_connected">Ningun Dispositivo Conectado</string>
+    <string name="lbl_status_description_connecting">Conectando</string>
+    <string name="lbl_connected_device_description_non_recognized">No Reconocido</string>
     <!--  FIN  CONFIGURACION DE DISPLAY NAME DEL ENUM Status  -->
 
 </resources>

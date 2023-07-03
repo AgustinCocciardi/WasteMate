@@ -1,14 +1,9 @@
 package com.grupom2.wastemate.bluetooth;
 
-import android.Manifest;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
-
-import androidx.annotation.RequiresPermission;
 
 import com.google.gson.Gson;
 import com.grupom2.wastemate.R;
@@ -29,7 +24,7 @@ public class BluetoothManager
     private boolean autoReconnect = true;
     private boolean isDisconnectExplicit = false;
     private static final long RECONNECT_DELAY = 3000; // 3 seconds
-    private Context context;
+    private final Context context;
     private Handler handler;
     private boolean isConnected;
 
@@ -50,7 +45,7 @@ public class BluetoothManager
         }
         autoReconnect = true;
         bluetoothConnection.connectToDevice(deviceAddress, commonUuid);
-        startConnectionStatusMonitoring();
+        //startConnectionStatusMonitoring();
         isConnected = true;
     }
 
@@ -64,7 +59,7 @@ public class BluetoothManager
     {
         if (isConnected)
         {
-            stopConnectionStatusMonitoring();
+            //stopConnectionStatusMonitoring();
             bluetoothConnection.disconnect();
             isDisconnectExplicit = true;
             isConnected = false;
@@ -172,21 +167,14 @@ public class BluetoothManager
         return deviceName;
     }
 
-    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH})
     public Set<BluetoothDevice> getBondedDevices()
     {
         return bluetoothConnection.getBondedDevices();
     }
 
-    @RequiresPermission(anyOf = {Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN})
     public void startDiscovery()
     {
         bluetoothConnection.startDiscovery();
-    }
-
-    public void refresh()
-    {
-        bluetoothConnection.refreshAdapter();
     }
 
     public String getConnectedDeviceAddress()
@@ -196,7 +184,7 @@ public class BluetoothManager
 
     public boolean isEnabled()
     {
-        return bluetoothConnection.getAdapter().isEnabled();
+        return bluetoothConnection.isEnabled();
     }
 }
 

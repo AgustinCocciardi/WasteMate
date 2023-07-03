@@ -9,8 +9,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.text.InputFilter;
-import android.text.Spanned;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -35,9 +33,12 @@ import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.model.BluetoothMessage;
 import com.grupom2.wastemate.receiver.BluetoothDisabledBroadcastReceiver;
+import com.grupom2.wastemate.receiver.SafeBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
 import com.grupom2.wastemate.util.CalibrationHelpers;
 import com.grupom2.wastemate.util.CustomProgressDialog;
+import com.grupom2.wastemate.util.NavigationUtil;
+import com.grupom2.wastemate.util.PermissionHelper;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -73,6 +74,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private final BaseDeviceListAdapter.OnClickListener pairedListItemOnUnpairListener;
     private final PairedDeviceListAdapter.OnClickListener pairedDeviceListItemOnClickListener;
     private final BaseDeviceListAdapter.OnClickListener unpairedListItemOnClickListener;
+    private TextView lblShake;
     //endregion Main Settings
 
     //region Admin Settings
@@ -95,7 +97,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private SensorManager sensor;
     private boolean showingAdminSettings;
     private boolean isSensorRegistered;
-    private static BluetoothManager bluetoothService;
+    private BluetoothManager bluetoothManager;
     private ArrayList<BluetoothDevice> pairedDevices;
     private ArrayList<BluetoothDevice> availableDevices;
     //endregion Other Fields
@@ -107,9 +109,9 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     {
         toolbarButtonBackOnClickListener = this::toolbarButtonBackOnClickListener;
 
-        pairedListItemOnUnpairListener = SettingsActivity::pairedListItemOnUnpairListener;
+        pairedListItemOnUnpairListener = this::pairedListItemOnUnpairListener;
         pairedDeviceListItemOnClickListener = this::pairedDeviceListItemOnClickListener;
-        unpairedListItemOnClickListener = SettingsActivity::unpairedListItemOnClickListener;
+        unpairedListItemOnClickListener = this::unpairedListItemOnClickListener;
         btnSendSettingsOnClickListener = this::btnSendSettingsOnClickListener;
         btnStartCalibrationOnClickListener = this::btnStartCalibrationOnClickListener;
 
@@ -127,39 +129,45 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        super.onCreate(savedInstanceState);
+        try
+        {
+            super.onCreate(savedInstanceState);
 
-        //Se asigna un layout al activity para poder vincular los distintos componentes
-        setContentView(R.layout.activity_settings);
+            //Se asigna un layout al activity para poder vincular los distintos componentes
+            setContentView(R.layout.activity_settings);
 
-        sensor = (SensorManager) getSystemService(SENSOR_SERVICE);
-        showingAdminSettings = false;
-        bluetoothService = BluetoothService.getInstance();
-        pairedDevices = new ArrayList<>();
-        availableDevices = new ArrayList<>();
+            sensor = (SensorManager) getSystemService(SENSOR_SERVICE);
+            showingAdminSettings = false;
+            bluetoothManager = BluetoothService.getInstance();
+            pairedDevices = new ArrayList<>();
+            availableDevices = new ArrayList<>();
 
-        customProgressDialog = new CustomProgressDialog(SettingsActivity.this);
+            customProgressDialog = new CustomProgressDialog(SettingsActivity.this);
 
-        //region Toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        ImageView toolbarButtonBack = findViewById(R.id.toolbar_button_back);
-        toolbarButtonBack.setOnClickListener(toolbarButtonBackOnClickListener);
-        setSupportActionBar(toolbar);
-        //endregion Toolbar
+            //region Toolbar
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            ImageView toolbarButtonBack = findViewById(R.id.toolbar_button_back);
+            toolbarButtonBack.setOnClickListener(toolbarButtonBackOnClickListener);
+            setSupportActionBar(toolbar);
+            //endregion Toolbar
 
-        onCreateMainSettings();
+            onCreateMainSettings();
 
-        onCreateAdminSettings();
+            onCreateAdminSettings();
 
-        BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
-        BroadcastUtil.registerReceiver(this, bluetoothDeviceFoundReceiver, BluetoothDevice.ACTION_FOUND);
-        BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK);
-        BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.ACTION_UNSUPPORTED_DEVICE);
-        BroadcastUtil.registerReceiver(this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
+            BroadcastUtil.registerReceiver(this, bluetoothDeviceFoundReceiver, BluetoothDevice.ACTION_FOUND);
+            BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK);
+            BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
+            BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.ACTION_UNSUPPORTED_DEVICE);
+            BroadcastUtil.registerReceiver(this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
 
-        //TODO: VALIDAR PERMISOS.
-        bluetoothService.startDiscovery();
+            bluetoothManager.startDiscovery();
+        }
+        catch (SecurityException e)
+        {
+            NavigationUtil.navigateToSettingsActivity(null);
+        }
     }
 
     @Override
@@ -178,24 +186,27 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     protected void onResume()
     {
         super.onResume();
-        if (bluetoothService.isConnected())
+        if (PermissionHelper.checkPermissions(this))
         {
-            registerSensor();
-        }
-    }
+            if (bluetoothManager != null)
+            {
+                if (!bluetoothManager.isEnabled())
+                {
+                    NavigationUtil.navigateToBluetoothRequiredActivity(this);
+                }
 
-    private void registerSensor()
-    {
-        if (!isSensorRegistered)
-        {
-            sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-            isSensorRegistered = true;
+                if (bluetoothManager.isConnected())
+                {
+                    registerSensor();
+                }
+            }
         }
     }
 
     @Override
     protected void onStop()
     {
+
         super.onStop();
     }
 
@@ -248,51 +259,63 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     //endregion Overrides
 
     //region Listeners
-    private static void unpairedListItemOnClickListener(int position, BluetoothDevice model)
+    private void unpairedListItemOnClickListener(int position, BluetoothDevice model)
     {
-        //TODO: VALIDAR PERMISOS?
-        if (model.getBondState() == BluetoothDevice.BOND_NONE)
+        try
         {
-            try
+            if (model.getBondState() == BluetoothDevice.BOND_NONE)
             {
-                Method method = model.getClass().getMethod(Constants.BLUETOOTH_DEVICE_METHOD_CREATE_BOND, (Class[]) null);
-                method.invoke(model, (Object[]) null);
+                try
+                {
+                    Method method = model.getClass().getMethod(Constants.BLUETOOTH_DEVICE_METHOD_CREATE_BOND, (Class[]) null);
+                    method.invoke(model, (Object[]) null);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
+        }
+        catch (SecurityException e)
+        {
+            NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null);
         }
     }
 
-    private static void pairedListItemOnUnpairListener(int position, BluetoothDevice model)
+    private void pairedListItemOnUnpairListener(int position, BluetoothDevice model)
     {
-        //TODO: VALIDAR PERMISOS?
-        if (model.getBondState() == BluetoothDevice.BOND_BONDED)
+        try
         {
-            try
+            if (model.getBondState() == BluetoothDevice.BOND_BONDED)
             {
-                disconnect();
-                Method method = model.getClass().getMethod(Constants.BLUETOOTH_DEVICE_METHOD_REMOVE_BOND, (Class[]) null);
-                method.invoke(model, (Object[]) null);
+                try
+                {
+                    disconnect();
+                    Method method = model.getClass().getMethod(Constants.BLUETOOTH_DEVICE_METHOD_REMOVE_BOND, (Class[]) null);
+                    method.invoke(model, (Object[]) null);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
+        }
+        catch (SecurityException e)
+        {
+NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null);
         }
     }
 
-    private static void disconnect()
+    private void disconnect()
     {
-        bluetoothService.removeLastConnectedDevice();
-        bluetoothService.disconnectAndForget();
+        bluetoothManager.removeLastConnectedDevice();
+        bluetoothManager.disconnectAndForget();
     }
 
     private void btnStartCalibrationOnClickListener(View v)
     {
-        Spinner spinnerSensores = (Spinner) findViewById(R.id.spinner_sensors);
-        int sensorCalibrationCode = CalibrationHelpers.sensorsDictionary.get(spinnerSensores.getSelectedItem().toString());
+        Spinner spinnerSensors = findViewById(R.id.spinner_sensors);
+        int sensorCalibrationCode = CalibrationHelpers.sensorsDictionary.get(spinnerSensors.getSelectedItem().toString());
         BluetoothMessage message = new BluetoothMessage(sensorCalibrationCode);
         BluetoothService.getInstance().write(message);
     }
@@ -300,7 +323,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private void btnSendSettingsOnClickListener(View v)
     {
         int weightLimit = Integer.parseInt(txtMaximumWeight.getText().toString());
-        double minimumDistance = Integer.parseInt(txtFullPercentage.getText().toString()) / 100.0; //TODO: sacar numero magico
+        double minimumDistance = Integer.parseInt(txtFullPercentage.getText().toString()) / 100.0; //TODO: sacar numero mágico
         double criticalDistance = Integer.parseInt(txtCriticalPercentage.getText().toString()) / 100.0;
         BluetoothMessage message = new BluetoothMessage(Constants.CODE_CONFIGURE_THRESHOLDS, weightLimit, minimumDistance, criticalDistance);
         BluetoothService.getInstance().write(message);
@@ -312,28 +335,29 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
     private void toolbarButtonBackOnClickListener(View v)
     {
+
         onBackPressed();
     }
 
     private void pairedDeviceListItemOnClickListener(int position, BluetoothDevice device)
     {
         customProgressDialog.show();
-        if (bluetoothService != null)
+        if (bluetoothManager != null)
         {
-            if (bluetoothService.getBluetoothConnection().isConnected(device))
+            if (bluetoothManager.getBluetoothConnection().isConnected(device))
             {
                 disconnect();
             }
             else
             {
-                bluetoothService.connectToDevice(device.getAddress());
+                bluetoothManager.connectToDevice(device.getAddress());
             }
         }
     }
     //endregion Listeners
 
     //region Broadcast Receivers
-    private class BluetoothDeviceFoundReceiver extends BroadcastReceiver
+    private class BluetoothDeviceFoundReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -357,13 +381,13 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
     }
 
-    private class BluetoothDeviceConnectedBroadcastReceiver extends BroadcastReceiver
+    private class BluetoothDeviceConnectedBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);//TODO: GUARDAR LOS PARAMETROS?
-            handleDeviceConnectionStatus(bluetoothService.getConnectedDeviceAddress(), true);
+            BluetoothDeviceData data = BroadcastUtil.getData(intent, BluetoothDeviceData.class);
+            handleDeviceConnectionStatus(bluetoothManager.getConnectedDeviceAddress(), true);
             customProgressDialog.dismiss();
 
             if (data != null)
@@ -376,28 +400,19 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
     }
 
-    private class BluetoothDeviceDisconnectedReceiver extends BroadcastReceiver
+    private class BluetoothDeviceDisconnectedReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//TODO: PONER ESTE EXTRA EN ALGUN LADO?
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//TODO: PONER ESTE EXTRA EN ALGÚN LADO?
             handleDeviceConnectionStatus(device.getAddress(), false);
             customProgressDialog.dismiss();
             unregisterSensor();
         }
     }
 
-    private void unregisterSensor()
-    {
-        if (isSensorRegistered)
-        {
-            sensor.unregisterListener(this);
-            isSensorRegistered = false;
-        }
-    }
-
-    private class DeviceUnsupportedBroadcastReceiver extends BroadcastReceiver
+    private class DeviceUnsupportedBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -407,7 +422,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
     }
 
-    private class BluetoothDeviceBondStateChangedReceiver extends BroadcastReceiver
+    private class BluetoothDeviceBondStateChangedReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -462,10 +477,12 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         //endregion Admin Settings
     }
 
-    private void onCreateMainSettings()
+    private void onCreateMainSettings() throws SecurityException
     {
         //region Main Settings
         mainSettingsLayout = findViewById(R.id.layoutMainSettings);
+
+        lblShake = findViewById(R.id.label_shake);
 
         //region Paired Devices
         pairedDevicesRecyclerView = findViewById(R.id.recycler_view_paired);
@@ -488,8 +505,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         availableDevicesRecyclerView.setAdapter(availableDevicesAdapter);
         //endregion
 
-        //TODO: VALIDAR PERMISOS.
-        Set<BluetoothDevice> bondedDevices = bluetoothService.getBondedDevices();
+        Set<BluetoothDevice> bondedDevices = bluetoothManager.getBondedDevices();
         if (bondedDevices != null && bondedDevices.size() != 0)
         {
             pairedDevices.addAll(bondedDevices);
@@ -530,50 +546,26 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
         return index;
     }
+
+    private void unregisterSensor()
+    {
+        if (isSensorRegistered)
+        {
+            lblShake.setVisibility(View.GONE);
+            sensor.unregisterListener(this);
+            isSensorRegistered = false;
+        }
+    }
+
+    private void registerSensor()
+    {
+        if (!isSensorRegistered)
+        {
+            lblShake.setVisibility(View.VISIBLE);
+            sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+            isSensorRegistered = true;
+        }
+    }
     //endregion Other Methods
 
-}
-
-
-class MinMaxFilter implements InputFilter
-{
-    private int intMin = 0;
-    private int intMax = 0;
-
-    // Initialized
-    MinMaxFilter(int minValue, int maxValue)
-    {
-        this.intMin = minValue;
-        this.intMax = maxValue;
-    }
-
-    @Override
-    public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend)
-    {
-        try
-        {
-            int input = Integer.parseInt(dest.toString() + source.toString());
-            if (isInRange(intMin, intMax, input))
-            {
-                return null;
-            }
-        }
-        catch (NumberFormatException e)
-        {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    private boolean isInRange(int a, int b, int c)
-    {
-        if (b > a)
-        {
-            return c >= a && c <= b;
-        }
-        else
-        {
-            return c >= b && c <= a;
-        }
-    }
 }

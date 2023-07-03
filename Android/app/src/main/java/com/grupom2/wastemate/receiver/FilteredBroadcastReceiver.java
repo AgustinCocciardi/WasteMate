@@ -1,11 +1,10 @@
 package com.grupom2.wastemate.receiver;
 
-import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
 import com.grupom2.wastemate.util.BroadcastUtil;
 
-public abstract class FilteredBroadcastReceiver extends BroadcastReceiver
+public abstract class FilteredBroadcastReceiver extends SafeBroadcastReceiver
 {
     protected IntentFilter intentFilter;
 
@@ -19,3 +18,4 @@ public abstract class FilteredBroadcastReceiver extends BroadcastReceiver
         return intentFilter;
     }
 }
+

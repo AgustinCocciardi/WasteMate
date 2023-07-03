@@ -57,15 +57,11 @@ public class BaseDeviceListAdapter<T extends BaseDeviceListAdapter.BaseDeviceVie
         }
         holder.lblDeviceName.setText(deviceName == null || deviceName.isEmpty() ? deviceAddress : deviceName);
         holder.lblDeviceAddress.setText(deviceAddress);
-        holder.itemView.setOnClickListener(new View.OnClickListener()
+        holder.itemView.setOnClickListener(view ->
         {
-            @Override
-            public void onClick(View view)
+            if (onItemClickedListener != null)
             {
-                if (onItemClickedListener != null)
-                {
-                    onItemClickedListener.onClick(position, device);
-                }
+                onItemClickedListener.onClick(position, device);
             }
         });
         return device;

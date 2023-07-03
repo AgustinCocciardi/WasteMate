@@ -1,12 +1,8 @@
 package com.grupom2.wastemate.activity;
 
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -60,13 +56,20 @@ public class PermissionsMissingActivity extends AppCompatActivity
 
         //Se obtienen los permisos faltantes del intent
         ArrayList<String> missingPermissions = getIntent().getExtras().getStringArrayList(Constants.MISSING_PERMISSIONS_KEY);
+        if (missingPermissions != null)
+        {
+            //Se cargan los permisos faltantes en el list view
+            ListView listViewPermissionsMissing = findViewById(R.id.list_view_permissions_missing);
+            itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
+            itemsAdapter.addAll(missingPermissionsName);
+            listViewPermissionsMissing.setAdapter(itemsAdapter);
+        }
+        else
+        {
+            checkPermissions();
+        }
 
-        //Se cargan los permisos faltantes en el list view
-        ListView listViewPermissionsMissing = findViewById(R.id.list_view_permissions_missing);
-        itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
-        ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
-        itemsAdapter.addAll(missingPermissionsName);
-        listViewPermissionsMissing.setAdapter(itemsAdapter);
     }
 
     @Override
@@ -74,20 +77,7 @@ public class PermissionsMissingActivity extends AppCompatActivity
     {
         super.onRestart();
 
-        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
-        hasAllPermissions = missingPermissions.isEmpty();
-
-        if (hasAllPermissions)
-        {
-            onBackPressed();
-        }
-        else
-        {
-            itemsAdapter.clear();
-            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
-            itemsAdapter.addAll(missingPermissionsName);
-            itemsAdapter.notifyDataSetChanged();
-        }
+        checkPermissions();
     }
     //endregion Activity Life Cycle
 
@@ -97,7 +87,7 @@ public class PermissionsMissingActivity extends AppCompatActivity
     {
         if (hasAllPermissions)
         {
-            super.onBackPressed();
+            finish();
         }
         else
         {
@@ -136,10 +126,7 @@ public class PermissionsMissingActivity extends AppCompatActivity
     //region Listeners
     private void btnOpenConfigurationOnClickListener(View v)
     {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-        startActivity(intent);
+        PermissionHelper.openAppSettings(this);
     }
     //endregion Listeners
 
@@ -165,6 +152,25 @@ public class PermissionsMissingActivity extends AppCompatActivity
             missingPermissions.add(permissionName);
         }
         return missingPermissions;
+    }
+
+    private void checkPermissions()
+    {
+        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
+        hasAllPermissions = missingPermissions.isEmpty();
+
+        if (hasAllPermissions)
+        {
+            finishAffinity();
+            finish();
+        }
+        else
+        {
+            itemsAdapter.clear();
+            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
+            itemsAdapter.addAll(missingPermissionsName);
+            itemsAdapter.notifyDataSetChanged();
+        }
     }
     //endregion Other Methods
 }

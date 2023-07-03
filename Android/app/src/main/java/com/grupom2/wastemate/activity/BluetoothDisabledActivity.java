@@ -112,7 +112,6 @@ public class BluetoothDisabledActivity extends AppCompatActivity
         if (result.getResultCode() == Activity.RESULT_OK)
         {
             isBluetoothEnabled = true;
-            bluetoothManager.refresh();
             onBackPressed();
         }
     }
@@ -137,7 +136,6 @@ public class BluetoothDisabledActivity extends AppCompatActivity
                 if (state == BluetoothAdapter.STATE_ON)
                 {
                     isBluetoothEnabled = true;
-                    bluetoothManager.refresh();
                 }
             }
         }

@@ -2,12 +2,10 @@ package com.grupom2.wastemate.util;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.Intent;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.grupom2.wastemate.R;
 

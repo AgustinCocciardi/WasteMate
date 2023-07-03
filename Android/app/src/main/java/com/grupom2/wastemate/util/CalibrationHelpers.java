@@ -2,7 +2,6 @@ package com.grupom2.wastemate.util;
 
 import com.grupom2.wastemate.constant.Constants;
 
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 

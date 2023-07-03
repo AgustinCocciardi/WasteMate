@@ -1,9 +1,5 @@
 package com.grupom2.wastemate.constant;
 
-import android.content.Intent;
-
-import com.grupom2.wastemate.R;
-
 public class Constants
 {
     public static final String UNIDENTIFIED = "UNIDENTIFIED";

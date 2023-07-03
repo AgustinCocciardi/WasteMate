@@ -8,7 +8,7 @@ public class BluetoothPreferencesManager
 {
     private static final String PREFS_NAME = "BluetoothPrefs";
     private static final String KEY_LAST_CONNECTED_DEVICE = "LastConnectedDevice";
-    private SharedPreferencesManager sharedPreferencesManager;
+    private final SharedPreferencesManager sharedPreferencesManager;
 
     public BluetoothPreferencesManager(Context context) {
         sharedPreferencesManager = SharedPreferencesManager.getInstance(context, PREFS_NAME);

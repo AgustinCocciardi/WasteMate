@@ -1,7 +1,6 @@
 package com.grupom2.wastemate.activity;
 
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,6 +24,7 @@ import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.model.BluetoothMessage;
 import com.grupom2.wastemate.model.Status;
 import com.grupom2.wastemate.receiver.BluetoothDisabledBroadcastReceiver;
+import com.grupom2.wastemate.receiver.SafeBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
 import com.grupom2.wastemate.util.CustomProgressDialog;
 import com.grupom2.wastemate.util.NavigationUtil;
@@ -63,10 +63,10 @@ public class MainActivity extends AppCompatActivity
     //region BroadcastReceivers
     private final BluetoothDisabledBroadcastReceiver bluetoothDisabledBroadcastReceiver;
     private final NoDeviceConnectedBroadcastReceiver noDeviceConnectedBroadcastReceiver;
-    private final BroadcastReceiver deviceConnectedBroadcastReceiver;
+    private final DeviceConnectedBroadcastReceiver deviceConnectedBroadcastReceiver;
     private final ServiceStartedBroadcastReceiver serviceStartedBroadcastReceiver;
     private final UpdateStatusBroadcastReceiver updateStatusBroadcastReceiver;
-    private final BroadcastReceiver bluetoothDeviceDisconnectedReceiver;
+    private final DeviceDisconnectedBroadcastReceiver bluetoothDeviceDisconnectedReceiver;
     //endregion BroadcastReceivers
 
     //region Other Fields
@@ -113,8 +113,15 @@ public class MainActivity extends AppCompatActivity
     protected void onResume()
     {
         super.onResume();
-        BroadcastUtil.registerLocalReceiver(this, noDeviceConnectedBroadcastReceiver, Actions.ACTION_NO_DEVICE_CONNECTED);
-        BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
+        if(PermissionHelper.checkPermissions(this)){
+            if (bluetoothManager != null && !bluetoothManager.isEnabled())
+            {
+                NavigationUtil.navigateToBluetoothRequiredActivity(this);
+            }
+            BroadcastUtil.registerLocalReceiver(this, noDeviceConnectedBroadcastReceiver, Actions.ACTION_NO_DEVICE_CONNECTED);
+            BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
+        }
+
     }
 
     @Override
@@ -122,6 +129,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onStop();
         BroadcastUtil.unregisterLocalReceiver(this, noDeviceConnectedBroadcastReceiver);
+
         BroadcastUtil.unregisterReceiver(this, bluetoothDisabledBroadcastReceiver);
     }
 
@@ -195,7 +203,7 @@ public class MainActivity extends AppCompatActivity
     //endregion Listeners
 
     //region Broadcast Receivers
-    private class NoDeviceConnectedBroadcastReceiver extends BroadcastReceiver
+    private class NoDeviceConnectedBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -210,9 +218,7 @@ public class MainActivity extends AppCompatActivity
             builder.setTitle(R.string.bluetooth_connection_required);
             builder.setMessage(R.string.bluetooth_connection_required_message);
             builder.setPositiveButton(R.string.button_go_to_settings, (dialog, which) ->
-            {
-                NavigationUtil.navigateToSettingsActivity(MainActivity.this);
-            });
+                    NavigationUtil.navigateToSettingsActivity(MainActivity.this));
             builder.setNegativeButton(R.string.button_ignore, (dialog, which) ->
             {
             });
@@ -221,7 +227,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class DeviceConnectedBroadcastReceiver extends BroadcastReceiver
+    private class DeviceConnectedBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -237,7 +243,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class DeviceDisconnectedBroadcastReceiver extends BroadcastReceiver
+    private class DeviceDisconnectedBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -246,7 +252,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class UpdateStatusBroadcastReceiver extends BroadcastReceiver
+    private class UpdateStatusBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -260,7 +266,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private class ServiceStartedBroadcastReceiver extends BroadcastReceiver
+    private class ServiceStartedBroadcastReceiver extends SafeBroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent)
@@ -270,10 +276,6 @@ public class MainActivity extends AppCompatActivity
             if (!bluetoothManager.isEnabled())
             {
                 NavigationUtil.navigateToBluetoothRequiredActivity(MainActivity.this);
-            }
-            else
-            {
-                // TODO: VER QUE HACER PARA SINCRONIZAR LOS DOS BROADCAST
             }
         }
     }
@@ -286,12 +288,11 @@ public class MainActivity extends AppCompatActivity
 
         // Se registran los broadcast receiver que deben estar mientras la activity no sea destruida.
         BroadcastUtil.registerLocalReceiver(this, serviceStartedBroadcastReceiver, Actions.ACTION_SERVICE_CONNECTED);
-
         BroadcastUtil.registerLocalReceiver(this, updateStatusBroadcastReceiver, Actions.ACTION_UPDATE);
-
         BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK);
-
         BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        BroadcastUtil.registerLocalReceiver(this, noDeviceConnectedBroadcastReceiver, Actions.ACTION_NO_DEVICE_CONNECTED);
+        BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
 
         // Se vinculan los controles a su correspondiente layout y se les asignan los listeners.
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -321,7 +322,7 @@ public class MainActivity extends AppCompatActivity
 
         showConnecting();
 
-                /* Se inicia el proceso de creación del servicio.
+        /* Se inicia el proceso de creación del servicio.
            Esto todavía no garantiza que el servicio esté creado. */
         startService();
 
@@ -375,9 +376,9 @@ public class MainActivity extends AppCompatActivity
 
     private void showDisconnected()
     {
-        lblStatusDescription.setText("Desconectado");
+        lblStatusDescription.setText(R.string.lbl_status_description_disconnected);
         lblStatusDescription.setTextColor(getApplicationContext().getColor(R.color.grey));
-        lblConnectedDeviceName.setText("Ningun Dispositivo Conectado");
+        lblConnectedDeviceName.setText(R.string.lbl_connected_device_description_no_device_connected);
         lblCurrentPercentageDescription.setVisibility(View.INVISIBLE);
         lblCurrentPercentageHeader.setVisibility(View.INVISIBLE);
         btnStartMaintenance.setEnabled(false);
@@ -388,9 +389,9 @@ public class MainActivity extends AppCompatActivity
 
     private void showConnecting()
     {
-        lblStatusDescription.setText("Conectando");
+        lblStatusDescription.setText(R.string.lbl_status_description_connecting);
         lblStatusDescription.setTextColor(getApplicationContext().getColor(R.color.teal_700));
-        lblConnectedDeviceName.setText("No Reconocido");
+        lblConnectedDeviceName.setText(R.string.lbl_connected_device_description_non_recognized);
         lblCurrentPercentageDescription.setVisibility(View.INVISIBLE);
         lblCurrentPercentageHeader.setVisibility(View.INVISIBLE);
         btnStartMaintenance.setEnabled(false);

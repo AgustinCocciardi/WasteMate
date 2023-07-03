@@ -59,29 +59,6 @@ public class PermissionHelper
         return permissionsNeeded;
     }
 
-    // Check if a specific permission is granted
-    public static boolean isPermissionGranted(Context context, String permission)
-    {
-        int result = context.checkCallingOrSelfPermission(permission);
-        return result == PackageManager.PERMISSION_GRANTED;
-    }
-
-    // Check if a specific permission is granted
-    public static boolean isPermissionGranted(Context context, ArrayList<String> permissions, ArrayList<String> missingPermissions)
-    {
-        missingPermissions = new ArrayList<>();
-        for (String permission : permissions)
-        {
-            int result = context.checkCallingOrSelfPermission(permission);
-            if (result != PackageManager.PERMISSION_GRANTED)
-            {
-                missingPermissions.add(permission);
-            }
-        }
-
-        return missingPermissions.isEmpty();
-    }
-
     // Open app settings screen
     public static void openAppSettings(Context context)
     {
@@ -141,23 +118,5 @@ public class PermissionHelper
             }
         }
         return !deniedPermissions.isEmpty();
-    }
-
-    public static boolean isAnyPermissionGranted(Context context, ArrayList<String> permissions, @NonNull ArrayList<String> missingPermissions)
-    {
-        for (String permission : permissions)
-        {
-            int result = context.checkCallingOrSelfPermission(permission);
-            if (result == PackageManager.PERMISSION_GRANTED)
-            {
-                return true;
-            }
-            else
-            {
-                missingPermissions.add(permission);
-            }
-        }
-
-        return missingPermissions.isEmpty();
     }
 }
