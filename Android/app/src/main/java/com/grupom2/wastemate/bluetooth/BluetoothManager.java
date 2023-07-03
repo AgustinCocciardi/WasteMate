@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.constant.Actions;
 import com.grupom2.wastemate.constant.Constants;
+import com.grupom2.wastemate.model.BluetoothDeviceData;
 import com.grupom2.wastemate.util.BroadcastUtil;
 
 import java.util.Set;
@@ -185,6 +186,16 @@ public class BluetoothManager
     public boolean isEnabled()
     {
         return bluetoothConnection.isEnabled();
+    }
+
+    public BluetoothDeviceData getDeviceData()
+    {
+        return bluetoothConnection.getDeviceData();
+    }
+
+    public void setCalibrating()
+    {
+        bluetoothConnection.startCalibration();
     }
 }
 

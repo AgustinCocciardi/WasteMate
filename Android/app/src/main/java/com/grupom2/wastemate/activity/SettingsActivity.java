@@ -1,7 +1,6 @@
 package com.grupom2.wastemate.activity;
 
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -41,6 +40,7 @@ import com.grupom2.wastemate.util.NavigationUtil;
 import com.grupom2.wastemate.util.PermissionHelper;
 
 import java.lang.reflect.Method;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -57,6 +57,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private TextView txtMaximumWeight;
     private TextView txtCriticalPercentage;
     private TextView txtFullPercentage;
+    private Button btnStartCalibration;
+    private Spinner spinnerSensors;
     //endregion Admin Settings
 
     //region Main Settings
@@ -90,6 +92,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private final BluetoothDeviceDisconnectedReceiver bluetoothDeviceDisconnectedReceiver;
     private final DeviceUnsupportedBroadcastReceiver deviceUnsupportedBroadcastReceiver;
     private final BluetoothDeviceBondStateChangedReceiver bluetoothDeviceBondStateChangedReceiver;
+    private final BluetoothConnectionCanceledBroadcastReceiver bluetoothConnectionCanceledBroadcastReceiver;
+    private final BluetoothCalibrationFinishedBroadcastReceiver bluetoothCalibrationFinishedBroadcastReceiver;
     //endregion Broadcast Receivers
 
     //region Other Fields
@@ -121,6 +125,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         bluetoothDeviceDisconnectedReceiver = new BluetoothDeviceDisconnectedReceiver();
         deviceUnsupportedBroadcastReceiver = new DeviceUnsupportedBroadcastReceiver();
         bluetoothDeviceBondStateChangedReceiver = new BluetoothDeviceBondStateChangedReceiver();
+        bluetoothConnectionCanceledBroadcastReceiver = new BluetoothConnectionCanceledBroadcastReceiver();
+        bluetoothCalibrationFinishedBroadcastReceiver = new BluetoothCalibrationFinishedBroadcastReceiver();
     }
     //endregion Constructor
 
@@ -161,7 +167,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
             BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.ACTION_UNSUPPORTED_DEVICE);
             BroadcastUtil.registerReceiver(this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-
+            BroadcastUtil.registerLocalReceiver(this, bluetoothConnectionCanceledBroadcastReceiver, Actions.ACTION_CONNECTION_CANCELED);
+            BroadcastUtil.registerLocalReceiver(this, bluetoothCalibrationFinishedBroadcastReceiver, Actions.ACTION_CALIBRATION_FINISHED);
             bluetoothManager.startDiscovery();
         }
         catch (SecurityException e)
@@ -179,6 +186,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         BroadcastUtil.unregisterReceiver(this, bluetoothDisabledBroadcastReceiver);
         BroadcastUtil.unregisterLocalReceiver(this, deviceConnectedBroadcastReceiver);
         BroadcastUtil.unregisterLocalReceiver(this, deviceUnsupportedBroadcastReceiver);
+        BroadcastUtil.unregisterLocalReceiver(this, bluetoothConnectionCanceledBroadcastReceiver);
         super.onDestroy();
     }
 
@@ -302,7 +310,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
         catch (SecurityException e)
         {
-NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null);
+            NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null);
         }
     }
 
@@ -315,13 +323,23 @@ NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null)
     private void btnStartCalibrationOnClickListener(View v)
     {
         Spinner spinnerSensors = findViewById(R.id.spinner_sensors);
+        btnStartCalibration.setEnabled(false);
+        spinnerSensors.setEnabled(false);
         int sensorCalibrationCode = CalibrationHelpers.sensorsDictionary.get(spinnerSensors.getSelectedItem().toString());
+        bluetoothManager.setCalibrating();
         BluetoothMessage message = new BluetoothMessage(sensorCalibrationCode);
-        BluetoothService.getInstance().write(message);
+        bluetoothManager.write(message);
     }
 
     private void btnSendSettingsOnClickListener(View v)
     {
+        if (!validateField(txtMaximumWeight, Constants.MAXIMUM_WEIGHT_MIN_VALUE, Constants.MAXIMUM_WEIGHT_MAX_VALUE) |
+                !validateField(txtCriticalPercentage, Constants.CRITICAL_CAPACITY_MIN_VALUE, Constants.CRITICAL_CAPACITY_MAX_VALUE) |
+                !validateField(txtFullPercentage, Constants.FULL_CAPACITY_MIN_VALUE, Constants.FULL_CAPACITY_MAX_VALUE))
+        {
+            return;
+        }
+
         int weightLimit = Integer.parseInt(txtMaximumWeight.getText().toString());
         double minimumDistance = Integer.parseInt(txtFullPercentage.getText().toString()) / 100.0; //TODO: sacar numero mágico
         double criticalDistance = Integer.parseInt(txtCriticalPercentage.getText().toString()) / 100.0;
@@ -392,9 +410,7 @@ NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null)
 
             if (data != null)
             {
-                txtMaximumWeight.setText(String.valueOf(data.getMaxAllowedWeight()));
-                txtCriticalPercentage.setText(String.valueOf(data.getCriticalPercentage() * 100));
-                txtFullPercentage.setText(String.valueOf(data.getFullPercentage() * 100));
+                initializeForm(data);
             }
             registerSensor();
         }
@@ -405,7 +421,7 @@ NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null)
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);//TODO: PONER ESTE EXTRA EN ALGÚN LADO?
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             handleDeviceConnectionStatus(device.getAddress(), false);
             customProgressDialog.dismiss();
             unregisterSensor();
@@ -446,6 +462,26 @@ NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null)
         }
     }
 
+    private class BluetoothConnectionCanceledBroadcastReceiver extends SafeBroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            Toast.makeText(SettingsActivity.this, "Error en la conexión", Toast.LENGTH_SHORT);
+        }
+    }
+
+    private class BluetoothCalibrationFinishedBroadcastReceiver extends SafeBroadcastReceiver
+    {
+
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            btnStartCalibration.setEnabled(true);
+            spinnerSensors.setEnabled(true);
+        }
+    }
+
     //endregion Broadcast Receivers
     //region Other Methods
     private void onCreateAdminSettings()
@@ -465,14 +501,24 @@ NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null)
         Button btnSendSettings = findViewById(R.id.button_send_settings);
         btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
 
-        Button btnStartCalibration = findViewById(R.id.button_start_calibration);
+
+        btnStartCalibration = findViewById(R.id.button_start_calibration);
         btnStartCalibration.setOnClickListener(btnStartCalibrationOnClickListener);
 
         //region Spinner
-        Spinner spinnerSensors = findViewById(R.id.spinner_sensors);
+        spinnerSensors = findViewById(R.id.spinner_sensors);
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item);
         adapter.addAll(CalibrationHelpers.sensorsDictionary.keySet());
         spinnerSensors.setAdapter(adapter);
+
+        if (bluetoothManager != null)
+        {
+            BluetoothDeviceData bluetoothDeviceData = bluetoothManager.getDeviceData();
+            initializeForm(bluetoothDeviceData);
+            boolean available = !bluetoothDeviceData.getIsCalibrating();
+            spinnerSensors.setEnabled(available);
+            btnSendSettings.setEnabled(available);
+        }
         //endregion Spinner
         //endregion Admin Settings
     }
@@ -565,6 +611,36 @@ NavigationUtil.navigateToMissingPermissionsActivity(SettingsActivity.this, null)
             sensor.registerListener(this, sensor.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
             isSensorRegistered = true;
         }
+    }
+
+    private boolean validateField(TextView txtMaximumWeight, int minValue, int maxValue)
+    {
+        String maximumWeightString = txtMaximumWeight.getText().toString();
+        if (maximumWeightString.isEmpty())
+        {
+            txtMaximumWeight.setError("Campo obligatorio");
+            return false;
+        }
+        int parsedMaximumWeight = Integer.parseInt(maximumWeightString);
+        if (parsedMaximumWeight < minValue || parsedMaximumWeight > maxValue)
+        {
+            txtMaximumWeight.setError("El valor debe estar entre " + minValue + " y " + maxValue);
+            return false;
+        }
+        return true;
+    }
+
+    private void initializeForm(BluetoothDeviceData deviceData)
+    {
+        setFormattedText(txtMaximumWeight, deviceData.getMaxAllowedWeight());
+        setFormattedText(txtCriticalPercentage, deviceData.getCriticalPercentage() * 100);
+        setFormattedText(txtFullPercentage, deviceData.getFullPercentage() * 100);
+    }
+
+    private void setFormattedText(TextView txtMaximumWeight, double deviceData)
+    {
+        DecimalFormat decimalFormat = new DecimalFormat("#");
+        txtMaximumWeight.setText(decimalFormat.format(deviceData));
     }
     //endregion Other Methods
 

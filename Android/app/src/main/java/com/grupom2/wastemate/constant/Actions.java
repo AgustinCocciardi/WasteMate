@@ -9,4 +9,5 @@ public class Actions
     public static final String ACTION_CONNECTION_CANCELED = "TODO";//TODO
     public static final String ACTION_SERVICE_CONNECTED = "com.grupom2.wastemate.ACTION_SERVICE_CONNECTED";
     public static final String ACTION_NO_DEVICE_CONNECTED = "com.grupom2.wastemate.NO_DEVICE_CONNECTED";
+    public static final String ACTION_CALIBRATION_FINISHED = "cal_end";
 }

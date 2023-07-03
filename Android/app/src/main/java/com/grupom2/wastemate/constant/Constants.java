@@ -21,4 +21,10 @@ public class Constants
     public static final String BLUETOOTH_DEVICE_METHOD_CREATE_BOND = "createBond";
     public static final String BLUETOOTH_DEVICE_METHOD_REMOVE_BOND = "removeBond";
     public static final String COMMON_UUID_STRING = "00001101-0000-1000-8000-00805F9B34FB";
+    public static final int MAXIMUM_WEIGHT_MIN_VALUE = 1;
+    public static final int MAXIMUM_WEIGHT_MAX_VALUE = 3;
+    public static final int CRITICAL_CAPACITY_MIN_VALUE = 50;
+    public static final int CRITICAL_CAPACITY_MAX_VALUE = 70;
+    public static final int FULL_CAPACITY_MIN_VALUE = 75;
+    public static final int FULL_CAPACITY_MAX_VALUE = 90;
 }

@@ -342,7 +342,7 @@ public class MainActivity extends AppCompatActivity
                 .findFirst()
                 .orElse(Status.ERROR);
         lblStatusDescription.setText(currentStatus.getDisplayName(this));
-        lblCurrentPercentageDescription.setText(new DecimalFormat("#0.00%").format(deviceData.getCurrentPercentage()));
+        lblCurrentPercentageDescription.setText(new DecimalFormat("#0.00%").format(deviceData.getCurrentPercentage()/100));
         int color = currentStatus.getDisplayColor(this);
         lblCurrentPercentageDescription.setTextColor(color);
         lblStatusDescription.setTextColor(color);

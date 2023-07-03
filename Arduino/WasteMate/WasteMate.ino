@@ -88,8 +88,7 @@
 #define CODE_UPDATE_STATUS "update"
 #define CODE_ACK "ack"
 #define CODE_ERROR "error"
-#define CODE_CALIBRATION_STARTED "calst"
-#define CODE_CALIBRATION_FINISHED "calend"
+#define CODE_CALIBRATION_FINISHED "cal_end"
 
 #define COMMAND_KEY_CODE "c"
 #define COMMAND_KEY_DATA "d"
@@ -98,6 +97,7 @@
 #define COMMAND_KEY_MAXIMUM_WEIGHT "mw"
 #define COMMAND_KEY_CONTAINER_SIZE "cs"
 #define COMMAND_KEY_CURRENT_PERCENTAGE "p"
+#define COMMAND_KEY_IS_CALIBRATING "ic"
 
 // TIPOS DE DATOS
 typedef enum status
@@ -195,7 +195,6 @@ int find_optimal_split_index(const String &message, int maxChars);
 bool try_deserialize(String serializedData, t_bluetooth_message *output);
 bool process_detection(int *detection_counter, t_event transition_event);
 void notify(DynamicJsonDocument doc);
-void calibration_started();
 void calibration_finished();
 
 // VARIABLES GLOBALES
@@ -210,6 +209,7 @@ int flex_min_value = DEFAULT_MINIMUM_FLEX_VALUE;
 double critical_percentage = DEFAULT_CRITICAL_PERCENTAGE;
 double full_percentage = DEFAULT_FULL_PERCENTAGE;
 int maximum_weight_allowed = DEFAULT_MAXIMUM_WEIGHT_ALLOWED;
+boolean is_calibrating = false;
 
 int is_open = 0;
 int presence_detection_counter = 0;
@@ -638,6 +638,7 @@ void notify_state()
   doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
+  doc[COMMAND_KEY_IS_CALIBRATING] = is_calibrating;
   serializeJson(doc, bluetooth_serial);
 }
 
@@ -650,6 +651,7 @@ void confirm_connection()
   doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
+  doc[COMMAND_KEY_IS_CALIBRATING] = is_calibrating;
   serializeJson(doc, bluetooth_serial);
 }
 
@@ -662,15 +664,9 @@ void error()
   serializeJson(doc, bluetooth_serial);
 }
 
-void calibration_started()
-{
-  DynamicJsonDocument doc(20);
-  doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_STARTED;
-  serializeJson(doc, bluetooth_serial);
-}
-
 void calibration_finished()
 {
+  is_calibrating = false;
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_FINISHED;
   serializeJson(doc, bluetooth_serial);
@@ -687,7 +683,7 @@ void log_current_status()
 
 void calibrate_pir()
 {
-  calibration_started();
+  is_calibrating = true;
   display_print_optimal_split("CALIBRANDO PIR");
   bool is_calibrated = false;
   int calibrationProgress = 0;
@@ -715,7 +711,7 @@ void calibrate_pir()
 
 void calibrate_ultrasonic_sensor()
 {
-  calibration_started();
+  is_calibrating = true;
   display_print_optimal_split("CALIBRANDO CAPACIDAD");
   double sample[MEDIAN_SAMPLE_SIZE];
   for (int i = 0; i < MEDIAN_SAMPLE_SIZE; i++)
@@ -735,7 +731,7 @@ void calibrate_flex_sensor()
   flex_min_value = MAXIMUM_DIGITAL_VALUE;
   flex_max_value = MINIMUM_DIGITAL_VALUE;
 
-  calibration_started();
+  is_calibrating = true;
   display_print_optimal_split("CALIBRANDO PESO MINIMO");
   for (int i = 0; i < MEDIAN_SAMPLE_SIZE; i++)
   {

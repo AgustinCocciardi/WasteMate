@@ -22,9 +22,9 @@
     <string name="label_critical_capacity_header_text">Porcentaje Capacidad Critica</string>
     <string name="label_minimum_distance_header_text">Porcentaje Sin Capacidad</string>
     <string name="button_send_text">Enviar</string>
-    <string name="txt_weight_limit_hint">3</string>
-    <string name="txt_critical_capacity_hint">50</string>
-    <string name="txt_full_percentage_hint">80</string>
+    <string name="txt_weight_limit_hint">Min. 1 - Max. 3</string>
+    <string name="txt_critical_capacity_hint">Min. 50 - Max. 70</string>
+    <string name="txt_full_percentage_hint">Min. 75 - Max. 90</string>
     <string name="label_device_address_text">AA:32:AA:21</string>
     <string name="label_device_name_text">Galaxy Nexus</string>
     <string name="list_sensors_spinner">listSensors</string>

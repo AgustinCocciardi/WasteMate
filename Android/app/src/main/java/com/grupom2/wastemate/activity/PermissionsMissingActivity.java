@@ -76,7 +76,6 @@ public class PermissionsMissingActivity extends AppCompatActivity
     protected void onRestart()
     {
         super.onRestart();
-
         checkPermissions();
     }
     //endregion Activity Life Cycle

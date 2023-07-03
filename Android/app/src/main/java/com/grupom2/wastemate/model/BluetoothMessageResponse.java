@@ -1,7 +1,5 @@
 package com.grupom2.wastemate.model;
 
-import android.util.Log;
-
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
@@ -22,6 +20,8 @@ public class BluetoothMessageResponse implements Serializable
     String data;
     @SerializedName("p")
     private double currentPercentage;
+    @SerializedName("ic")
+    private boolean isCalibrating;
 
     public static BluetoothMessageResponse fromJson(String serializedData)
     {
@@ -58,5 +58,10 @@ public class BluetoothMessageResponse implements Serializable
     public String getData()
     {
         return data;
+    }
+
+    public boolean getIsCalibrating()
+    {
+        return isCalibrating;
     }
 }
