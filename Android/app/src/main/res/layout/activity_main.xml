@@ -39,12 +39,10 @@
 
             <ImageView
                 android:id="@+id/button_settings"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_marginEnd="16dp"
-                android:background="@drawable/baseline_settings_24"
-                android:backgroundTint="#FFFFFF"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:background="@drawable/ripple_button_settings" app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="@+id/toolbar"
                 app:layout_constraintTop_toTopOf="parent"
                 android:contentDescription="@string/configuration_button_content_description" />
@@ -58,14 +56,12 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginEnd="32dp"
-        android:background="@drawable/ripple_button_white"
+        android:background="@drawable/ripple_button_refresh"
         android:contentDescription="@string/button_refresh_status_content_description"
         app:layout_constraintBottom_toBottomOf="@+id/label_status_description"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/label_status_description"
-        app:layout_constraintVertical_bias="0.434"
-        app:drawableEnabledImage="@drawable/baseline_refresh_24_white"
-        app:drawableDisabledImage="@drawable/baseline_refresh_24_black"/>
+        app:layout_constraintVertical_bias="0.434" />
 
 
     <TextView
@@ -91,7 +87,7 @@
         android:layout_marginStart="40dp"
         android:layout_marginTop="260dp"
         android:layout_marginEnd="65dp"
-        android:background="@drawable/ripple_button"
+        android:background="@drawable/ripple_button_no_image"
         android:drawableTint="@color/white"
         android:padding="10dp"
         android:text="@string/button_start_maintenance_text"
@@ -106,7 +102,7 @@
         android:layout_width="160dp"
         android:layout_height="60dp"
         android:layout_marginTop="40dp"
-        android:background="@drawable/ripple_button"
+        android:background="@drawable/ripple_button_no_image"
         android:padding="10dp"
         android:text="@string/button_disable_text"
         android:theme="@style/ButtonStyle"
@@ -120,7 +116,7 @@
         android:layout_width="160dp"
         android:layout_height="60dp"
         android:layout_marginTop="40dp"
-        android:background="@drawable/ripple_button"
+        android:background="@drawable/ripple_button_no_image"
         android:padding="10dp"
         android:text="@string/button_complete_maintenance_text"
         android:theme="@style/ButtonStyle"

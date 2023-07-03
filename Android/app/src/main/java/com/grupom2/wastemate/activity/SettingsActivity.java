@@ -506,7 +506,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private void handleDeviceConnectionStatus(String deviceAddress, boolean isConnected)
     {
         int index = findViewHolder(deviceAddress);
-        if (index > 0)
+        if (index >= 0)
         {
             PairedDeviceListAdapter.PairedDeviceViewHolder viewHolder = (PairedDeviceListAdapter.PairedDeviceViewHolder) pairedDevicesRecyclerView.findViewHolderForAdapterPosition(index);
             if (viewHolder != null)

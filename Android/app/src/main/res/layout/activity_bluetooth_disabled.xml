@@ -45,7 +45,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
-        android:background="@drawable/ripple_button"
+        android:background="@drawable/ripple_button_no_image"
         android:text="@string/button_activate_bluetooth_text"
         android:theme="@style/ButtonStyle"
         app:layout_constraintEnd_toEndOf="@+id/label_bluetooth_required_description"

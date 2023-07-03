@@ -55,7 +55,7 @@ private Context context;
 
     public static class PairedDeviceViewHolder extends BaseDeviceViewHolder
     {
-        FrameLayout btnUnpair;
+        View btnUnpair;
         View vwConnectedIndicator;
 
         public PairedDeviceViewHolder(View itemView)
@@ -69,6 +69,7 @@ private Context context;
         public void setConnectedIndicatorColor(Context context, boolean connected)
         {
             vwConnectedIndicator.setBackgroundColor(context.getResources().getColor(connected ? R.color.purple_500 : R.color.grey, context.getTheme()));
+            vwConnectedIndicator.invalidate();
         }
     }
 
