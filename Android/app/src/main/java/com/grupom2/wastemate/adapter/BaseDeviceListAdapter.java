@@ -9,11 +9,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.grupom2.wastemate.R;
+import com.grupom2.wastemate.constant.Constants;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.grupom2.wastemate.constant.Constants;
-import com.grupom2.wastemate.R;
 
 
 public class BaseDeviceListAdapter<T extends BaseDeviceListAdapter.BaseDeviceViewHolder> extends RecyclerView.Adapter<T>

@@ -17,7 +17,6 @@ import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.bluetooth.BluetoothManager;
 import com.grupom2.wastemate.bluetooth.BluetoothService;
 import com.grupom2.wastemate.constant.Actions;
-import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.receiver.FilteredBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
 

@@ -10,15 +10,18 @@ public class BluetoothPreferencesManager
     private static final String KEY_LAST_CONNECTED_DEVICE = "LastConnectedDevice";
     private final SharedPreferencesManager sharedPreferencesManager;
 
-    public BluetoothPreferencesManager(Context context) {
+    public BluetoothPreferencesManager(Context context)
+    {
         sharedPreferencesManager = SharedPreferencesManager.getInstance(context, PREFS_NAME);
     }
 
-    public void saveLastConnectedDevice(String deviceAddress) {
+    public void saveLastConnectedDevice(String deviceAddress)
+    {
         sharedPreferencesManager.saveString(KEY_LAST_CONNECTED_DEVICE, deviceAddress);
     }
 
-    public String loadLastConnectedDevice() {
+    public String loadLastConnectedDevice()
+    {
         return sharedPreferencesManager.loadString(KEY_LAST_CONNECTED_DEVICE, null);
     }
 

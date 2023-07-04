@@ -36,7 +36,7 @@ public class BluetoothConnection
     private SocketConnectionStarter socketConnectionStarter;
     private BluetoothAdapter bluetoothAdapter;
     private final Context context;
-    private BluetoothDeviceData deviceData;
+    private final BluetoothDeviceData deviceData;
 
     private final Object socketLock = new Object();
     private String lastDeviceConnectedAddress;

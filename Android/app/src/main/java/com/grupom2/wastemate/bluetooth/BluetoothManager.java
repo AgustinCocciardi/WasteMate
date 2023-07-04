@@ -2,8 +2,6 @@ package com.grupom2.wastemate.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 
 import com.google.gson.Gson;
 import com.grupom2.wastemate.R;
