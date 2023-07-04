@@ -29,7 +29,6 @@
         android:background="@drawable/ripple_button_unlink"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/include"
-        app:layout_constraintTop_toTopOf="parent">
-    </View>
+        app:layout_constraintTop_toTopOf="parent"></View>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

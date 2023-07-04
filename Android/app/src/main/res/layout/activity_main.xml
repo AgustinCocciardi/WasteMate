@@ -42,7 +42,8 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_marginEnd="16dp"
-                android:background="@drawable/ripple_button_settings" app:layout_constraintBottom_toBottomOf="parent"
+                android:background="@drawable/ripple_button_settings"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="@+id/toolbar"
                 app:layout_constraintTop_toTopOf="parent"
                 android:contentDescription="@string/configuration_button_content_description" />
