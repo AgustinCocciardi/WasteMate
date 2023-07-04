@@ -2,7 +2,7 @@
     <string name="app_name">WasteMate</string>
     <string name="label_paired_devices_header_text">Dispositivos Vinculados</string>
     <string name="label_available_devices_header_text">Dispositivos Disponibles</string>
-    <string name="label_shake_device">Sacuda el dispositivo para configurar Limites de Capacidad y Peso</string>
+    <string name="label_shake_device">Sacuda el dispositivo para acceder a las opciones de administración</string>
     <string name="label_bluetooth_required_text">Se requiere Bluetooth</string>
     <string name="label_activate_bluetooth">No es posible conectarse al dispositivo sin Bluetooth. \nPor favor, actívelo para continuar</string>
     <string name="button_activate_bluetooth_text">Activar</string>

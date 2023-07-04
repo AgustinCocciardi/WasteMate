@@ -1,5 +1,6 @@
 package com.grupom2.wastemate.activity;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,6 +64,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     //endregion Admin Settings
 
     //region Main Settings
+    private Button btnScanStop;
+    private ProgressBar progressBarScanning;
     private ConstraintLayout mainSettingsLayout;
     private PairedDeviceListAdapter pairedDevicesAdapter;
     private RecyclerView pairedDevicesRecyclerView;
@@ -73,6 +77,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private final View.OnClickListener toolbarButtonBackOnClickListener;
 
     //region Main Settings
+    private final View.OnClickListener btnScanStopOnClickListener;
     private final BaseDeviceListAdapter.OnClickListener pairedListItemOnUnpairListener;
     private final PairedDeviceListAdapter.OnClickListener pairedDeviceListItemOnClickListener;
     private final BaseDeviceListAdapter.OnClickListener unpairedListItemOnClickListener;
@@ -94,6 +99,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private final BluetoothDeviceBondStateChangedReceiver bluetoothDeviceBondStateChangedReceiver;
     private final BluetoothConnectionCanceledBroadcastReceiver bluetoothConnectionCanceledBroadcastReceiver;
     private final BluetoothCalibrationFinishedBroadcastReceiver bluetoothCalibrationFinishedBroadcastReceiver;
+    private final BluetoothScanningCompletedBroadcastReceiver bluetoothScanningCompletedBroadcastReceiver;
     //endregion Broadcast Receivers
 
     //region Other Fields
@@ -104,6 +110,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private BluetoothManager bluetoothManager;
     private ArrayList<BluetoothDevice> pairedDevices;
     private ArrayList<BluetoothDevice> availableDevices;
+    private boolean isScanning;
     //endregion Other Fields
 
     //endregion Fields
@@ -112,6 +119,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     public SettingsActivity()
     {
         toolbarButtonBackOnClickListener = this::toolbarButtonBackOnClickListener;
+
+        btnScanStopOnClickListener = this::btnScanStopOnClickListener;
         pairedListItemOnUnpairListener = this::pairedListItemOnUnpairListener;
         pairedDeviceListItemOnClickListener = this::pairedDeviceListItemOnClickListener;
         unpairedListItemOnClickListener = this::unpairedListItemOnClickListener;
@@ -126,6 +135,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         bluetoothDeviceBondStateChangedReceiver = new BluetoothDeviceBondStateChangedReceiver();
         bluetoothConnectionCanceledBroadcastReceiver = new BluetoothConnectionCanceledBroadcastReceiver();
         bluetoothCalibrationFinishedBroadcastReceiver = new BluetoothCalibrationFinishedBroadcastReceiver();
+        bluetoothScanningCompletedBroadcastReceiver = new BluetoothScanningCompletedBroadcastReceiver();
     }
     //endregion Constructor
 
@@ -154,21 +164,27 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             ImageView toolbarButtonBack = findViewById(R.id.toolbar_button_back);
             toolbarButtonBack.setOnClickListener(toolbarButtonBackOnClickListener);
             setSupportActionBar(toolbar);
+            btnScanStop = findViewById(R.id.button_scan_stop);
+            btnScanStop.setOnClickListener(btnScanStopOnClickListener);
+
+            progressBarScanning = findViewById(R.id.progressBar_scanning);
             //endregion Toolbar
 
             onCreateMainSettings();
 
             onCreateAdminSettings();
 
-            BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
-            BroadcastUtil.registerReceiver(this, bluetoothDeviceFoundReceiver, BluetoothDevice.ACTION_FOUND);
-            BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ARDUINO_ACTION_ACK);
-            BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
-            BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE);
-            BroadcastUtil.registerReceiver(this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-            BroadcastUtil.registerLocalReceiver(this, bluetoothConnectionCanceledBroadcastReceiver, Actions.LOCAL_ACTION_CONNECTION_CANCELED);
-            BroadcastUtil.registerLocalReceiver(this, bluetoothCalibrationFinishedBroadcastReceiver, Actions.ARDUINO_ACTION_CALIBRATION_FINISHED);
-            bluetoothManager.startDiscovery();
+            BroadcastUtil.registerReceiver(SettingsActivity.this, bluetoothDisabledBroadcastReceiver);
+            BroadcastUtil.registerReceiver(SettingsActivity.this, bluetoothDeviceFoundReceiver, BluetoothDevice.ACTION_FOUND);
+            BroadcastUtil.registerLocalReceiver(SettingsActivity.this, deviceConnectedBroadcastReceiver, Actions.ARDUINO_ACTION_ACK);
+            BroadcastUtil.registerReceiver(SettingsActivity.this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
+            BroadcastUtil.registerLocalReceiver(SettingsActivity.this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE);
+            BroadcastUtil.registerReceiver(SettingsActivity.this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            BroadcastUtil.registerLocalReceiver(SettingsActivity.this, bluetoothConnectionCanceledBroadcastReceiver, Actions.LOCAL_ACTION_CONNECTION_CANCELED);
+            BroadcastUtil.registerLocalReceiver(SettingsActivity.this, bluetoothCalibrationFinishedBroadcastReceiver, Actions.ARDUINO_ACTION_CALIBRATION_FINISHED);
+            BroadcastUtil.registerReceiver(SettingsActivity.this, bluetoothScanningCompletedBroadcastReceiver, BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+
+            doScanStop();
         }
         catch (SecurityException e)
         {
@@ -186,6 +202,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         BroadcastUtil.unregisterLocalReceiver(this, deviceConnectedBroadcastReceiver);
         BroadcastUtil.unregisterLocalReceiver(this, deviceUnsupportedBroadcastReceiver);
         BroadcastUtil.unregisterLocalReceiver(this, bluetoothConnectionCanceledBroadcastReceiver);
+        BroadcastUtil.unregisterReceiver(this, bluetoothScanningCompletedBroadcastReceiver);
         super.onDestroy();
     }
 
@@ -266,6 +283,42 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     //endregion Overrides
 
     //region Listeners
+    private void btnScanStopOnClickListener(View view)
+    {
+        doScanStop();
+    }
+
+    private void doScanStop()
+    {
+        try
+        {
+            if (isScanning)
+            {
+                stopScan();
+            }
+            else
+            {
+                startScan();
+            }
+        }
+        catch (SecurityException ignored)
+        {
+        }
+    }
+
+    private void startScan()
+    {
+        availableDevices = new ArrayList<>();
+        btnScanStop.setText("Detener");
+        isScanning = true;
+        progressBarScanning.setVisibility(View.VISIBLE);
+        if (bluetoothManager.isDiscovering())
+        {
+            bluetoothManager.cancelDiscovery();
+        }
+        bluetoothManager.startDiscovery();
+    }
+
     private void unpairedListItemOnClickListener(int position, BluetoothDevice model)
     {
         try
@@ -358,9 +411,10 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
     private void pairedDeviceListItemOnClickListener(int position, BluetoothDevice device)
     {
-        customProgressDialog.show();
         if (bluetoothManager != null)
         {
+            customProgressDialog.show();
+
             if (bluetoothManager.getBluetoothConnection().isConnected(device))
             {
                 disconnect();
@@ -380,20 +434,26 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         public void onReceive(Context context, Intent intent)
         {
             //Se lo agregan sus datos a una lista de dispositivos encontrados
-            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            if (!pairedDevices.contains(device))
+            try
             {
-                int i = availableDevices.indexOf(device);
-                if (i >= 0)
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (device.getBondState() == BluetoothDevice.BOND_NONE)
                 {
-                    availableDevices.set(i, device);
+                    int i = availableDevices.indexOf(device);
+                    if (i >= 0)
+                    {
+                        availableDevices.set(i, device);
+                    }
+                    else
+                    {
+                        availableDevices.add(device);
+                    }
+                    availableDevicesAdapter.setData(availableDevices);
+                    availableDevicesAdapter.notifyDataSetChanged();
                 }
-                else
-                {
-                    availableDevices.add(device);
-                }
-                availableDevicesAdapter.setData(availableDevices);
-                availableDevicesAdapter.notifyDataSetChanged();
+            }
+            catch (SecurityException ignored)
+            {
             }
         }
     }
@@ -436,7 +496,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         public void onReceive(Context context, Intent intent)
         {
             customProgressDialog.dismiss();
-            Toast.makeText(getApplicationContext(), "Dispositivo no disponible", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Dispositivo no compatible", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -469,7 +529,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            Toast.makeText(SettingsActivity.this, "Error en la conexión", Toast.LENGTH_SHORT);
+            Toast.makeText(SettingsActivity.this, "No se pudo establecer la conexión.", Toast.LENGTH_LONG).show();
+            customProgressDialog.dismiss();
         }
     }
 
@@ -636,6 +697,26 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     {
         DecimalFormat decimalFormat = new DecimalFormat("#");
         txtMaximumWeight.setText(decimalFormat.format(deviceData));
+    }
+
+    private class BluetoothScanningCompletedBroadcastReceiver extends SafeBroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent)
+        {
+            stopScan();
+        }
+    }
+
+    private void stopScan()
+    {
+        isScanning = false;
+        btnScanStop.setText("Buscar");
+        progressBarScanning.setVisibility(View.INVISIBLE);
+        if (bluetoothManager.isDiscovering())
+        {
+            bluetoothManager.cancelDiscovery();
+        }
     }
     //endregion Other Methods
 

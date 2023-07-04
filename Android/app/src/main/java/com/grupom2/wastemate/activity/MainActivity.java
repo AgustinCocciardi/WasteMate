@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity
         deviceConnectedBroadcastReceiver = new DeviceConnectedBroadcastReceiver();
         bluetoothDeviceDisconnectedReceiver = new DeviceDisconnectedBroadcastReceiver();
         deviceUnsupportedBroadcastReceiver = new DeviceUnsupportedBroadcastReceiver();
+
         isInitialized = false;
     }
     //endregion Constructor
@@ -151,7 +152,7 @@ public class MainActivity extends AppCompatActivity
                 //Se registran los broadcast listeners que sólo deben estar activos mientras la activity tenga foco.
                 BroadcastUtil.registerLocalReceiver(this, noDeviceConnectedBroadcastReceiver, Actions.LOCAL_ACTION_NO_DEVICE_CONNECTED);
                 BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
-                BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE);
+                BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE, Actions.LOCAL_ACTION_CONNECTION_CANCELED);
             }
         }
     }
@@ -390,7 +391,7 @@ public class MainActivity extends AppCompatActivity
         BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
         BroadcastUtil.registerLocalReceiver(this, noDeviceConnectedBroadcastReceiver, Actions.LOCAL_ACTION_NO_DEVICE_CONNECTED);
         BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
-        BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE);
+        BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE, Actions.LOCAL_ACTION_CONNECTION_CANCELED);
 
         showConnecting();
 

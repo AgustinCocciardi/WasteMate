@@ -142,6 +142,16 @@ public class BluetoothManager
     {
         return bluetoothConnection.isLastDeviceConnected(device);
     }
+
+    public boolean isDiscovering() throws SecurityException
+    {
+        return bluetoothConnection.isDiscovering();
+    }
+
+    public void cancelDiscovery()
+    {
+        bluetoothConnection.cancelDiscovery();
+    }
 }
 
 

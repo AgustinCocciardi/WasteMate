@@ -276,6 +276,16 @@ public class BluetoothConnection
         }
     }
 
+    public boolean isDiscovering() throws SecurityException
+    {
+        return bluetoothAdapter.isDiscovering();
+    }
+
+    public void cancelDiscovery() throws SecurityException
+    {
+        bluetoothAdapter.cancelDiscovery();
+    }
+
     private class SocketConnectionStarter
     {
         private HandlerThread handlerThread;
@@ -337,7 +347,7 @@ public class BluetoothConnection
     private class ConnectionHandler extends Handler
     {
         private static final int MAX_CONNECTION_ATTEMPTS = 5;
-        private static final int CONNECTION_INTERVAL = 2000;
+        private static final int CONNECTION_INTERVAL = 1000;
         private boolean ackReceived;
         private int connectionAttempts;
 
@@ -368,20 +378,18 @@ public class BluetoothConnection
                     try
                     {
                         InputStream inputStream = bluetoothSocket.getInputStream();
-                        if (inputStream.available() > 0)
-                        {
-                            BluetoothMessageResponse response = readUnsafe(inputStream);
 
-                            if (response != null)
-                            {
-                                ackReceived = true;
-                                deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight(), response.getIsCalibrating());
-                                BluetoothDeviceData messageBody = new BluetoothDeviceData(deviceData);
-                                socketReader = new SocketReader();
-                                socketReader.start();
-                                BroadcastUtil.sendLocalBroadcast(context, Actions.ARDUINO_ACTION_ACK, messageBody);
-                                removeCallbacksAndMessages(null);
-                            }
+                        BluetoothMessageResponse response = readUnsafe(inputStream);
+
+                        if (response != null)
+                        {
+                            ackReceived = true;
+                            deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight(), response.getIsCalibrating());
+                            BluetoothDeviceData messageBody = new BluetoothDeviceData(deviceData);
+                            socketReader = new SocketReader();
+                            socketReader.start();
+                            BroadcastUtil.sendLocalBroadcast(context, Actions.ARDUINO_ACTION_ACK, messageBody);
+                            removeCallbacksAndMessages(null);
                         }
                     }
                     catch (IOException e)
