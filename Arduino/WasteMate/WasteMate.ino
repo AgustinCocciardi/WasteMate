@@ -36,7 +36,7 @@
 #define MEDIAN_SAMPLE_SIZE 10         // TAMAÑO DE LA MEDIANA PARA LA CALIBRACION DE LOS SENSORES.
 #define CALIBRATION_TIME 30           // TIEMPO DE CALIBRACION DE LOS SENSORES.
 #define CALIBRATION_DELAY 1000        // DELAY PARA LA CALIBRACION DE LOS SENSORES.
-#define GENERAL_TIMEOUT_LIMIT 50      // TEMPORIZADOR PARA LECTURA DE SENSORES.
+#define GENERAL_TIMEOUT_LIMIT 100      // TEMPORIZADOR PARA LECTURA DE SENSORES.
 #define PRESENCE_TIMEOUT_LIMIT 5000   // TEMPORIZADOR PARA DETECCION DE PRESENCIA.
 #define MINIMUM_STATE_INDEX 0         // INDICE INFERIOR DE LA MATRIZ DE ESTADOS.
 #define MAXIMUM_STATE_INDEX 3         // INDICE SUPERIOR DE LA MATRIZ DE ESTADOS.
@@ -182,18 +182,15 @@ long get_echo(int pin);
 float get_distance(int pin);
 void show_status(t_status status);
 void log_current_status();
-void log(const char *message);
 void calibrate_pir();
 void calibrate_flex_sensor();
 void calibrate_ultrasonic_sensor();
 int calculate_median(float *arr, size_t size);
 void insertion_sort(float *arr, size_t size);
-void update_display(String message);
 void display_print_optimal_split(const String &message);
 int find_optimal_split_index(const String &message, int maxChars);
 bool try_deserialize(String serializedData, t_bluetooth_message *output);
 bool process_detection(int *detection_counter, t_event transition_event);
-void notify(DynamicJsonDocument doc);
 void calibration_finished();
 
 // VARIABLES GLOBALES
@@ -233,12 +230,12 @@ byte index_verification;
 
 // MAQUINA DE ESTADO
 t_actions action[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
-    {
-        {none, close, open, disable, none, none, disable, error, none, error},    // ST_UNF
-        {none, close, open, disable, none, none, disable, error, error, disable}, // ST_CRIT_CAP
-        {none, none, none, none, none, none, none, none, error, none},            // ST_NO_CAP
-        {none, none, none, none, none, none, none, error, reset, error},          // ST_MAINT
-                                                                                  // EV_CONT        EV_NPD      EV_PD      EV_MAX_WR      EV_UNF      EV_CCR      EV_MCR        EV_SM               EV_MF      EV_DIS                 EV_CON_REQ
+{
+  {none,      close,    open,   disable,    none,     none,   disable,  error,  none,   error   },// ST_UNF
+  {none,      close,    open,   disable,    none,     none,   disable,  error,  error,  disable },// ST_CRIT_CAP
+  {none,      none,     none,   none,       none,     none,   none,     none,   error,  none    },// ST_NO_CAP
+  {none,      none,     none,   none,       none,     none,   none,     error,  reset,  error   },// ST_MAINT
+  // EV_CONT  EV_NPD    EV_PD   EV_MAX_WR   EV_UNF    EV_CCR  EV_MCR    EV_SM   EV_MF   EV_DIS
 };
 
 t_status transition[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
@@ -263,32 +260,35 @@ t_status transition[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
 };
 
 const char *STATUS_DESCRIPTION[] =
-    {
-        "CAPACIDAD DISPONIBLE",
-        "CAPACIDAD CRITICA",
-        "SIN CAPACIDAD",
-        "EN MANTENIMIENTO"};
+{
+  "CAPACIDAD DISPONIBLE",
+  "CAPACIDAD CRITICA",
+  "SIN CAPACIDAD",
+  "EN MANTENIMIENTO"
+};
 
 const char *EVENT_DESCRIPTION[] =
-    {
-        "CONTINUAR",
-        "SIN PRESENCIA",
-        "PRESENCIA DETECTADA",
-        "PESO MAXIMO ALCANZADO",
-        "CAPACIDAD DISPONIBLE",
-        "CAPACIDAD CRITICA ALCANZADA",
-        "CAPACIDAD MAXIMA ALCANZADA",
-        "ENVIAR A MANTENIMIENTO",
-        "MANTENIMIENTO TERMINADO",
-        "DESHABILITAR TACHO",
-        "SOLICITUD DE CONEXION"};
+{
+  "CONTINUAR",
+  "SIN PRESENCIA",
+  "PRESENCIA DETECTADA",
+  "PESO MAXIMO ALCANZADO",
+  "CAPACIDAD DISPONIBLE",
+  "CAPACIDAD CRITICA ALCANZADA",
+  "CAPACIDAD MAXIMA ALCANZADA",
+  "ENVIAR A MANTENIMIENTO",
+  "MANTENIMIENTO TERMINADO",
+  "DESHABILITAR TACHO",
+  "SOLICITUD DE CONEXION"
+};
 
 t_verification verification[MAXIMUM_INDEX_VERIFICATIONS] =
-    {
-        verify_presence,
-        verify_weight,
-        verify_message,
-        verify_capacity};
+{
+  verify_presence,
+  verify_weight,
+  verify_message,
+  verify_capacity
+};
 
 // INICIALIZACION
 void setup()
@@ -296,19 +296,22 @@ void setup()
   Serial.begin(9600);
   bluetooth_serial.begin(9600);
 
-  // set up the LCD's number of columns and rows:
   display.begin(16, 2);
   display.setRGB(colorR, colorG, colorB);
   display_print_optimal_split("INICIANDO");
+
   pinMode(PIR_SENSOR, INPUT);
   pinMode(FLEX_SENSOR, INPUT);
   pinMode(ULTRASONIC_SENSOR_TRIGGER, INPUT);
+
   servo.attach(SERVOMOTOR);
 
   timer_general.limit = GENERAL_TIMEOUT_LIMIT;
   timer_presence.limit = PRESENCE_TIMEOUT_LIMIT;
   timer_connection_request.limit = PRESENCE_TIMEOUT_LIMIT;
+
   initialize();
+  
   current_state = ST_UNF;
   previous_state = ST_UNF;
 
@@ -348,7 +351,11 @@ void get_event()
     reset_timer(&timer_general);
     int index = (index_verification % MAXIMUM_INDEX_VERIFICATIONS);
     index_verification++;
-    verification[index]();
+    bool result = verification[index]();
+    if(!result)
+    {
+      current_event = EV_CONT;
+    }
   }
   else
   {
@@ -367,14 +374,16 @@ bool verify_presence()
     if (presence_detected)
     {
       reset_timer(&timer_presence);
+      return true;
     }
-    return true;
+    return false;
   }
   else
   {
     if (timer_presence.current_time > 0 && timeout_reached(&timer_presence))
     {
       current_event = EV_NPD;
+      return true;
     }
     return false;
   }
@@ -391,6 +400,7 @@ bool verify_weight()
   if (currentWeight >= maximum_weight_allowed)
   {
     process_detection(&maximum_weight_detection_counter, EV_MAX_WR);
+    return true;
   }
   return false;
 }
@@ -403,7 +413,7 @@ bool verify_message()
   if (bluetooth_serial.available())
   {
     // se los lee y se los muestra en el monitor serie
-    String read = bluetooth_serial.readString();
+    String read = bluetooth_serial.readStringUntil('\n');
     debug_println(read);
     bluetooth_serial.flush();
     read.trim();
@@ -413,8 +423,16 @@ bool verify_message()
 
     if (success)
     {
-      process_command(&bluetooth_message);
+      return process_command(&bluetooth_message);
     }
+    else
+    {
+      return false;
+    }
+  }
+  else
+  {
+    return false;
   }
 }
 
@@ -429,7 +447,9 @@ bool verify_capacity()
     {
       critical_capacity_detection_counter = 0;
       capacity_available_detection_counter = 0;
+      return true;
     }
+    return false;
   }
   else if (current_percentage >= critical_percentage)
   {
@@ -437,7 +457,9 @@ bool verify_capacity()
     {
       full_capacity_detection_counter = 0;
       capacity_available_detection_counter = 0;
+      return true;
     }
+    return false;
   }
   else if (current_percentage < critical_percentage)
   {
@@ -445,9 +467,10 @@ bool verify_capacity()
     {
       full_capacity_detection_counter = 0;
       critical_capacity_detection_counter = 0;
+      return true;
     }
   }
-  return true;
+  return false;
 }
 
 bool process_detection(int *detection_counter, t_event transition_event)
@@ -462,50 +485,54 @@ bool process_detection(int *detection_counter, t_event transition_event)
   return false;
 }
 
-void process_command(const t_bluetooth_message *bluetooth_message)
+bool process_command(const t_bluetooth_message *bluetooth_message)
 {
   switch (bluetooth_message->code)
   {
     case CODE_UPDATE_REQUESTED:
       notify_state();
-    break;
-  case CODE_START_MAINTENANCE:
-    current_event = EV_SM;
-    break;
+      break;
+    case CODE_START_MAINTENANCE:
+      current_event = EV_SM;
+      return true;
+      break;
 
-  case CODE_DISABLE:
-    current_event = EV_DIS;
-    break;
+    case CODE_DISABLE:
+      current_event = EV_DIS;
+      return true;
+      break;
 
-  case CODE_MAINTENANCE_FINISHED:
-    current_event = EV_MF;
-    break;
+    case CODE_MAINTENANCE_FINISHED:
+      current_event = EV_MF;
+      return true;
+      break;
 
-  case CODE_CONFIGURE_THRESHOLDS:
-    debug_println(bluetooth_message->data.full_percentage);
-    debug_println(bluetooth_message->data.critical_percentage);
-    debug_println(bluetooth_message->data.maximum_weight);
-    full_percentage = bluetooth_message->data.full_percentage;
-    critical_percentage = bluetooth_message->data.critical_percentage;
-    maximum_weight_allowed = bluetooth_message->data.maximum_weight;
-    break;
+    case CODE_CONFIGURE_THRESHOLDS:
+      debug_println(bluetooth_message->data.full_percentage);
+      debug_println(bluetooth_message->data.critical_percentage);
+      debug_println(bluetooth_message->data.maximum_weight);
+      full_percentage = bluetooth_message->data.full_percentage;
+      critical_percentage = bluetooth_message->data.critical_percentage;
+      maximum_weight_allowed = bluetooth_message->data.maximum_weight;
+      break;
 
-  case CODE_CONNECTION_REQUESTED:
-    confirm_connection();
-    break;
-  case CODE_CALIBRATE_PIR:
-    calibrate_pir();
-    break;
-  case CODE_CALIBRATE_MAXIMUM_CAPACITY:
-    calibrate_ultrasonic_sensor();
-    break;
-  case CODE_CALIBRATE_WEIGHT:
-    calibrate_flex_sensor();
-    break;
-  default:
-    debug_println("COMANDO NO RECONOCIDO");
-    break;
+    case CODE_CONNECTION_REQUESTED:
+      confirm_connection();
+      break;
+    case CODE_CALIBRATE_PIR:
+      calibrate_pir();
+      break;
+    case CODE_CALIBRATE_MAXIMUM_CAPACITY:
+      calibrate_ultrasonic_sensor();
+      break;
+    case CODE_CALIBRATE_WEIGHT:
+      calibrate_flex_sensor();
+      break;
+    default:
+      debug_println("COMANDO NO RECONOCIDO");
+      break;
   }
+  return false;
 }
 
 bool try_deserialize(String serializedData, t_bluetooth_message *output)
