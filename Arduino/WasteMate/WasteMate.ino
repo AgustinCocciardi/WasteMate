@@ -45,7 +45,7 @@
 #define MAXIMUM_INDEX_VERIFICATIONS 4 // INDICE SUPERIOR DE LA LISTA DE VERIFICACIONES.
 #define DETECTION_TIMES 5             // CANTIDAD DE DETECCIONES CONSECUTIVAS NECESARIAS PARA UN CAMBIO DE ESTADO.
 #define LID_CLOSED 0                  // ANGULO CORRESPONDIENTE A LA TAPA CERRADA.
-#define LID_OPEN 180                  // ANGULO CORRESPONDIENTE A LA TAPA ABIERTA.
+#define LID_OPEN 90                  // ANGULO CORRESPONDIENTE A LA TAPA ABIERTA.
 
 #define DEFAULT_MAXIMUM_FLEX_VALUE 500   // VALOR MAXIMO DEL SENSOR FLEX POR DEFECTO.
 #define DEFAULT_MINIMUM_FLEX_VALUE 0     // VALOR MINIMO DEL SENSOR FLEX POR DEFECTO.
@@ -384,7 +384,7 @@ bool verify_weight()
 {
   int flex_value = analogRead(FLEX_SENSOR);
   int currentWeight = map(flex_value, flex_min_value, flex_max_value, 0, maximum_weight_allowed);
-
+  
   if (currentWeight >= maximum_weight_allowed)
   {
     process_detection(&maximum_weight_detection_counter, EV_MAX_WR);
