@@ -239,24 +239,12 @@ t_actions action[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
 };
 
 t_status transition[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
-    {
-        {
-            ST_UNF,
-            ST_UNF,
-            ST_UNF,
-            ST_NO_CAP,
-            ST_UNF,
-            ST_CRIT_CAP,
-            ST_NO_CAP,
-            ST_UNF,
-            ST_UNF,
-            ST_UNF,
-
-        },                                                                                                                       // ST_UNF
-        {ST_CRIT_CAP, ST_CRIT_CAP, ST_CRIT_CAP, ST_NO_CAP, ST_UNF, ST_CRIT_CAP, ST_NO_CAP, ST_CRIT_CAP, ST_CRIT_CAP, ST_NO_CAP}, // ST_CRIT_CAP
-        {ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_MAINT, ST_NO_CAP, ST_NO_CAP},           // ST_NO_CAP
-        {ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_UNF, ST_MAINT},                      // ST_MAINT
-                                                                                                                                 // EV_CONT        EV_NPD           EV_PD            EV_MAX_WR      EV_UNF         EV_CCR           EV_MCR         EV_SM            EV_MF            EV_DIS
+{
+  {ST_UNF,        ST_UNF,       ST_UNF,       ST_NO_CAP,  ST_UNF,       ST_CRIT_CAP,  ST_NO_CAP,  ST_UNF,       ST_UNF,       ST_UNF,   },// ST_UNF
+  {ST_CRIT_CAP,   ST_CRIT_CAP,  ST_CRIT_CAP,  ST_NO_CAP,  ST_UNF,       ST_CRIT_CAP,  ST_NO_CAP,  ST_CRIT_CAP,  ST_CRIT_CAP,  ST_NO_CAP }, // ST_CRIT_CAP
+  {ST_NO_CAP,     ST_NO_CAP,    ST_NO_CAP,    ST_NO_CAP,  ST_NO_CAP,    ST_NO_CAP,    ST_NO_CAP,  ST_MAINT,     ST_NO_CAP,    ST_NO_CAP },// ST_NO_CAP
+  {ST_MAINT,      ST_MAINT,     ST_MAINT,     ST_MAINT,   ST_MAINT,     ST_MAINT,     ST_MAINT,   ST_MAINT,     ST_UNF,       ST_MAINT  },// ST_MAINT
+  // EV_CONT      EV_NPD        EV_PD         EV_MAX_WR   EV_UNF        EV_CCR        EV_MCR      EV_SM         EV_MF         EV_DIS
 };
 
 const char *STATUS_DESCRIPTION[] =
