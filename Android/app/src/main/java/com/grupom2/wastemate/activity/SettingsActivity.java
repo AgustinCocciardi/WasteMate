@@ -219,7 +219,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                     NavigationUtil.navigateToBluetoothRequiredActivity(this);
                 }
 
-                registerSensor();
                 if (bluetoothManager.isConnected())
                 {
                     registerSensor();
@@ -239,7 +238,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     protected void onPause()
     {
         super.onPause();
-        //unregisterSensor();
+        unregisterSensor();
     }
     //endregion Activity Life Cycle
 
@@ -490,7 +489,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             {
                 handleDeviceConnectionStatus(device.getAddress(), false);
                 customProgressDialog.dismiss();
-                //unregisterSensor();
+                unregisterSensor();
             }
         }
     }
