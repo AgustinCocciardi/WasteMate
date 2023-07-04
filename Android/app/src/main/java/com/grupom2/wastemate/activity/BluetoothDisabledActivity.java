@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.bluetooth.BluetoothManager;
 import com.grupom2.wastemate.bluetooth.BluetoothService;
+import com.grupom2.wastemate.constant.Actions;
 import com.grupom2.wastemate.constant.Constants;
 import com.grupom2.wastemate.receiver.FilteredBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
@@ -145,7 +146,7 @@ public class BluetoothDisabledActivity extends AppCompatActivity
     //region Listeners
     private void btnEnableBluetoothOnClickListener(View v)
     {
-        Intent intent = new Intent(Constants.ANDROID_ACTION_REQUEST_ENABLE_BLUETOOTH);
+        Intent intent = new Intent(Actions.ANDROID_ACTION_REQUEST_ENABLE_BLUETOOTH);
         enableBluetoothActivityLauncher.launch(intent);
     }
     //endregion Listeners

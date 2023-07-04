@@ -87,7 +87,6 @@
 
 #define CODE_UPDATE_STATUS "update"
 #define CODE_ACK "ack"
-#define CODE_ERROR "error"
 #define CODE_CALIBRATION_FINISHED "cal_end"
 
 #define COMMAND_KEY_CODE "c"
@@ -136,8 +135,8 @@ typedef struct st_timer
 typedef struct st_bluetooth_data
 {
   int maximum_weight;
-  double critical_percentage;
-  double full_percentage;
+  float critical_percentage;
+  float full_percentage;
 } t_bluetooth_data;
 
 typedef struct st_bluetooth_message
@@ -150,8 +149,8 @@ typedef struct st_bluetooth_response
 {
   String code;
   int maximum_weight;
-  double critical_percentage;
-  double full_percentage;
+  float critical_percentage;
+  float full_percentage;
   int container_size;
   String status;
 } t_bluetooth_response;
@@ -180,15 +179,15 @@ void reset_timer(t_timer *timer);
 void move_servomotor(byte degrees);
 void initialize();
 long get_echo(int pin);
-double get_distance(int pin);
+float get_distance(int pin);
 void show_status(t_status status);
 void log_current_status();
 void log(const char *message);
 void calibrate_pir();
 void calibrate_flex_sensor();
 void calibrate_ultrasonic_sensor();
-int calculate_median(double *arr, size_t size);
-void insertion_sort(double *arr, size_t size);
+int calculate_median(float *arr, size_t size);
+void insertion_sort(float *arr, size_t size);
 void update_display(String message);
 void display_print_optimal_split(const String &message);
 int find_optimal_split_index(const String &message, int maxChars);
@@ -206,8 +205,8 @@ int container_size = DEFAULT_CONTAINER_SIZE;
 int flex_max_value = DEFAULT_MAXIMUM_FLEX_VALUE;
 int flex_min_value = DEFAULT_MINIMUM_FLEX_VALUE;
 
-double critical_percentage = DEFAULT_CRITICAL_PERCENTAGE;
-double full_percentage = DEFAULT_FULL_PERCENTAGE;
+float critical_percentage = DEFAULT_CRITICAL_PERCENTAGE;
+float full_percentage = DEFAULT_FULL_PERCENTAGE;
 int maximum_weight_allowed = DEFAULT_MAXIMUM_WEIGHT_ALLOWED;
 boolean is_calibrating = false;
 
@@ -217,7 +216,7 @@ int critical_capacity_detection_counter = 0;
 int full_capacity_detection_counter = 0;
 int maximum_weight_detection_counter = 0;
 int capacity_available_detection_counter = 0;
-double current_percentage = 0.0;
+float current_percentage = 0.0;
 
 PWMServo servo;
 rgb_lcd display;
@@ -422,8 +421,8 @@ bool verify_message()
 // Verifica el volumen ocupado.
 bool verify_capacity()
 {
-  double distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
-  current_percentage = 1 - (distance / (double)container_size);
+  float distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
+  current_percentage = 1 - (distance / (float)container_size);
   if (current_percentage >= full_percentage)
   {
     if (process_detection(&full_capacity_detection_counter, EV_MCR))
@@ -603,7 +602,7 @@ void move_servomotor(byte degrees)
 }
 
 // Obtiene la distancia en centímetros utilizando el factor de conversión.
-double get_distance(int pin)
+float get_distance(int pin)
 {
   return PULSE_DURATION_TO_DISTANCE_FACTOR * get_echo(pin);
 }
@@ -631,7 +630,7 @@ void show_status(t_status status)
 // Notifica el estado actual.
 void notify_state()
 {
-  DynamicJsonDocument doc(100);
+  DynamicJsonDocument doc(150);
   doc[COMMAND_KEY_CODE] = CODE_UPDATE_STATUS;
   doc[COMMAND_KEY_CRITICAL_PERCENTAGE] = critical_percentage;
   doc[COMMAND_KEY_FULL_PERCENTAGE] = full_percentage;
@@ -651,17 +650,14 @@ void confirm_connection()
   doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
-  doc[COMMAND_KEY_IS_CALIBRATING] = is_calibrating;
+  doc[COMMAND_KEY_IS_CALIBRATING] = is_calibrating;  
   serializeJson(doc, bluetooth_serial);
 }
 
 // Notifica la ocurrencia de un error.
 void error()
 {
-  DynamicJsonDocument doc(20);
-  doc[COMMAND_KEY_CODE] = CODE_ERROR;
-  doc[COMMAND_KEY_DATA] = MESSAGE_ERROR;
-  serializeJson(doc, bluetooth_serial);
+  debug_println(MESSAGE_ERROR);
 }
 
 void calibration_finished()
@@ -713,10 +709,10 @@ void calibrate_ultrasonic_sensor()
 {
   is_calibrating = true;
   display_print_optimal_split("CALIBRANDO CAPACIDAD");
-  double sample[MEDIAN_SAMPLE_SIZE];
+  float sample[MEDIAN_SAMPLE_SIZE];
   for (int i = 0; i < MEDIAN_SAMPLE_SIZE; i++)
   {
-    double distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
+    float distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
     sample[i] = distance;
     delay(CALIBRATION_DELAY);
   }
@@ -756,11 +752,11 @@ void calibrate_flex_sensor()
 }
 
 // Algoritmo de ordenación por inserción.
-void insertion_sort(double *arr, size_t size)
+void insertion_sort(float *arr, size_t size)
 {
   for (size_t i = 1; i < size; ++i)
   {
-    double key = arr[i];
+    float key = arr[i];
     size_t j = i;
     while (j > 0 && arr[j - 1] > key)
     {
@@ -772,7 +768,7 @@ void insertion_sort(double *arr, size_t size)
 }
 
 // Se calcula la mediana del array ordenandolo y tomando el o los valores intermedios.
-int calculate_median(double *arr, size_t size)
+int calculate_median(float *arr, size_t size)
 {
   // Se ordena el array.
   insertion_sort(arr, size);

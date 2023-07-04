@@ -53,7 +53,7 @@ public class BluetoothService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
-        BroadcastUtil.sendLocalBroadcast(this, Actions.ACTION_SERVICE_CONNECTED, null);
+        BroadcastUtil.sendLocalBroadcast(this, Actions.LOCAL_ACTION_SERVICE_CONNECTED, null);
         return START_STICKY;
     }
 

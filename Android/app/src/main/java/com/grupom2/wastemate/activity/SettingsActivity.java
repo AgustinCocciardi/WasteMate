@@ -112,7 +112,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     public SettingsActivity()
     {
         toolbarButtonBackOnClickListener = this::toolbarButtonBackOnClickListener;
-
         pairedListItemOnUnpairListener = this::pairedListItemOnUnpairListener;
         pairedDeviceListItemOnClickListener = this::pairedDeviceListItemOnClickListener;
         unpairedListItemOnClickListener = this::unpairedListItemOnClickListener;
@@ -163,12 +162,12 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
             BroadcastUtil.registerReceiver(this, bluetoothDisabledBroadcastReceiver);
             BroadcastUtil.registerReceiver(this, bluetoothDeviceFoundReceiver, BluetoothDevice.ACTION_FOUND);
-            BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ACTION_ACK);
+            BroadcastUtil.registerLocalReceiver(this, deviceConnectedBroadcastReceiver, Actions.ARDUINO_ACTION_ACK);
             BroadcastUtil.registerReceiver(this, bluetoothDeviceDisconnectedReceiver, BluetoothDevice.ACTION_ACL_DISCONNECTED);
-            BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.ACTION_UNSUPPORTED_DEVICE);
+            BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE);
             BroadcastUtil.registerReceiver(this, bluetoothDeviceBondStateChangedReceiver, BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-            BroadcastUtil.registerLocalReceiver(this, bluetoothConnectionCanceledBroadcastReceiver, Actions.ACTION_CONNECTION_CANCELED);
-            BroadcastUtil.registerLocalReceiver(this, bluetoothCalibrationFinishedBroadcastReceiver, Actions.ACTION_CALIBRATION_FINISHED);
+            BroadcastUtil.registerLocalReceiver(this, bluetoothConnectionCanceledBroadcastReceiver, Actions.LOCAL_ACTION_CONNECTION_CANCELED);
+            BroadcastUtil.registerLocalReceiver(this, bluetoothCalibrationFinishedBroadcastReceiver, Actions.ARDUINO_ACTION_CALIBRATION_FINISHED);
             bluetoothManager.startDiscovery();
         }
         catch (SecurityException e)
@@ -422,9 +421,12 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         public void onReceive(Context context, Intent intent)
         {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            handleDeviceConnectionStatus(device.getAddress(), false);
-            customProgressDialog.dismiss();
-            unregisterSensor();
+            if (bluetoothManager.isLastDeviceConnected(device))
+            {
+                handleDeviceConnectionStatus(device.getAddress(), false);
+                customProgressDialog.dismiss();
+                unregisterSensor();
+            }
         }
     }
 
@@ -434,7 +436,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         public void onReceive(Context context, Intent intent)
         {
             customProgressDialog.dismiss();
-            Toast.makeText(getApplicationContext(), "Dispositivo no soportado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Dispositivo no disponible", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -490,13 +492,10 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         adminSettingsLayout = findViewById(R.id.layoutAdminSettings);
 
         txtMaximumWeight = findViewById(R.id.txt_weight_limit);
-        //txtMaximumWeight.setFilters(new InputFilter[]{new MinMaxFilter(1, 3)});
 
         txtCriticalPercentage = findViewById(R.id.txt_critical_percentage);
-        //txtCriticalPercentage.setFilters(new InputFilter[]{new MinMaxFilter(50, 80)});
 
         txtFullPercentage = findViewById(R.id.txt_full_percentage);
-        //txtFullPercentage.setFilters(new InputFilter[]{new MinMaxFilter(50, 90)});
 
         Button btnSendSettings = findViewById(R.id.button_send_settings);
         btnSendSettings.setOnClickListener(btnSendSettingsOnClickListener);
@@ -517,7 +516,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             initializeForm(bluetoothDeviceData);
             boolean available = !bluetoothDeviceData.getIsCalibrating();
             spinnerSensors.setEnabled(available);
-            btnSendSettings.setEnabled(available);
+            btnStartCalibration.setEnabled(available);
         }
         //endregion Spinner
         //endregion Admin Settings
@@ -555,10 +554,6 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         if (bondedDevices != null && bondedDevices.size() != 0)
         {
             pairedDevices.addAll(bondedDevices);
-        }
-        else
-        {
-            //TODO: MOSTRAR NO HAY DISPOSITIVOS?
         }
         pairedDevicesAdapter.setData(pairedDevices);
         availableDevicesAdapter.setData(availableDevices);

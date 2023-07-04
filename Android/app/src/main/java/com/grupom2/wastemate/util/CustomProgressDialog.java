@@ -22,14 +22,10 @@ public class CustomProgressDialog extends Dialog
     private void init()
     {
         setContentView(R.layout.custom_dialog_progress);
-        setCancelable(false); // Optional: Set whether the dialog can be canceled with the back button
-
-        // Adjust the dialog's dimensions to create a square shape
+        setCancelable(false);
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
         layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
         layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         getWindow().setAttributes(layoutParams);
     }
-
-    // You can add additional methods to update the progress, handle specific cases, etc.
 }

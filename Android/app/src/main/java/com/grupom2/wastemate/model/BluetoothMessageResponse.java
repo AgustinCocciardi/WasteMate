@@ -1,5 +1,7 @@
 package com.grupom2.wastemate.model;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
@@ -23,11 +25,19 @@ public class BluetoothMessageResponse implements Serializable
     @SerializedName("ic")
     private boolean isCalibrating;
 
-    public static BluetoothMessageResponse fromJson(String serializedData)
+    public static BluetoothMessageResponse fromJson(String serializedData) throws IllegalStateException
     {
-        Gson gson = new Gson();
-        BluetoothMessageResponse response = gson.fromJson(serializedData, BluetoothMessageResponse.class);
-        return response;
+        try
+        {
+            Gson gson = new Gson();
+            BluetoothMessageResponse response = gson.fromJson(serializedData, BluetoothMessageResponse.class);
+            return response;
+        }
+        catch (Exception e)
+        {
+            Log.e("BluetoothMessageResponse.fromJson", serializedData);
+            return null;
+        }
     }
 
     public double getCurrentPercentage()

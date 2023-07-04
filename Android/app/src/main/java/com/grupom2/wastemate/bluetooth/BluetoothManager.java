@@ -20,16 +20,9 @@ public class BluetoothManager
     private final BluetoothConnection bluetoothConnection;
     private final BluetoothPreferencesManager prefsManager;
     private final UUID commonUuid = UUID.fromString(Constants.COMMON_UUID_STRING);
-
-    //region Auto Reconnect
-    private boolean autoReconnect = true;
-    private boolean isDisconnectExplicit = false;
-    private static final long RECONNECT_DELAY = 3000; // 3 seconds
     private final Context context;
-    private Handler handler;
     private boolean isConnected;
 
-    //endregion
     public BluetoothManager(Context context)
     {
         bluetoothConnection = new BluetoothConnection(context);
@@ -44,9 +37,7 @@ public class BluetoothManager
         {
             disconnect();
         }
-        autoReconnect = true;
         bluetoothConnection.connectToDevice(deviceAddress, commonUuid);
-        //startConnectionStatusMonitoring();
         isConnected = true;
     }
 
@@ -60,9 +51,7 @@ public class BluetoothManager
     {
         if (isConnected)
         {
-            //stopConnectionStatusMonitoring();
             bluetoothConnection.disconnect();
-            isDisconnectExplicit = true;
             isConnected = false;
         }
     }
@@ -70,7 +59,7 @@ public class BluetoothManager
     public void disconnectAndForget()
     {
         disconnect();
-        BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_NO_DEVICE_CONNECTED, null);
+        BroadcastUtil.sendLocalBroadcast(context, Actions.LOCAL_ACTION_NO_DEVICE_CONNECTED, null);
     }
 
     public void saveLastConnectedDevice(String deviceAddress)
@@ -92,54 +81,7 @@ public class BluetoothManager
         }
         else
         {
-            BroadcastUtil.sendLocalBroadcast(context, Actions.ACTION_NO_DEVICE_CONNECTED, null);
-        }
-    }
-
-    private void handleConnectionError()
-    {
-        if (autoReconnect && !isDisconnectExplicit)
-        {
-            reconnect();
-        }
-    }
-
-    private void reconnect()
-    {
-        String deviceAddress = prefsManager.loadLastConnectedDevice();
-        if (deviceAddress != null)
-        {
-            connectToDevice(deviceAddress); // Replace YOUR_UUID with your desired UUID
-        }
-    }
-
-    private void startConnectionStatusMonitoring()
-    {
-        handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                if (isConnected())
-                {
-                    // Connection is active, continue monitoring
-                    handler.postDelayed(this, RECONNECT_DELAY);
-                }
-                else
-                {
-                    // Connection is dropped, attempt reconnection
-                    handleConnectionError();
-                }
-            }
-        }, RECONNECT_DELAY);
-    }
-
-    private void stopConnectionStatusMonitoring()
-    {
-        if (handler != null)
-        {
-            handler.removeCallbacksAndMessages(null);
+            BroadcastUtil.sendLocalBroadcast(context, Actions.LOCAL_ACTION_NO_DEVICE_CONNECTED, null);
         }
     }
 
@@ -196,6 +138,11 @@ public class BluetoothManager
     public void setCalibrating()
     {
         bluetoothConnection.startCalibration();
+    }
+
+    public boolean isLastDeviceConnected(BluetoothDevice device)
+    {
+        return bluetoothConnection.isLastDeviceConnected(device);
     }
 }
 

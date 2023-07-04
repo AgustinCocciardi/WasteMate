@@ -8,7 +8,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.grupom2.wastemate.R;
@@ -56,27 +55,34 @@ public class PermissionsMissingActivity extends AppCompatActivity
 
         //Se obtienen los permisos faltantes del intent
         ArrayList<String> missingPermissions = getIntent().getExtras().getStringArrayList(Constants.MISSING_PERMISSIONS_KEY);
-        if (missingPermissions != null)
-        {
-            //Se cargan los permisos faltantes en el list view
-            ListView listViewPermissionsMissing = findViewById(R.id.list_view_permissions_missing);
-            itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
-            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
-            itemsAdapter.addAll(missingPermissionsName);
-            listViewPermissionsMissing.setAdapter(itemsAdapter);
-        }
-        else
-        {
-            checkPermissions();
-        }
 
+        //Se cargan los permisos faltantes en el list view
+        ListView listViewPermissionsMissing = findViewById(R.id.list_view_permissions_missing);
+        itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
+        itemsAdapter.addAll(missingPermissionsName);
+        listViewPermissionsMissing.setAdapter(itemsAdapter);
     }
 
     @Override
     protected void onRestart()
     {
         super.onRestart();
-        checkPermissions();
+
+        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
+        hasAllPermissions = missingPermissions.isEmpty();
+
+        if (hasAllPermissions)
+        {
+            onBackPressed();
+        }
+        else
+        {
+            itemsAdapter.clear();
+            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
+            itemsAdapter.addAll(missingPermissionsName);
+            itemsAdapter.notifyDataSetChanged();
+        }
     }
     //endregion Activity Life Cycle
 
@@ -84,9 +90,11 @@ public class PermissionsMissingActivity extends AppCompatActivity
     @Override
     public void onBackPressed()
     {
+        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
+        hasAllPermissions = missingPermissions.isEmpty();
         if (hasAllPermissions)
         {
-            finish();
+            super.onBackPressed();
         }
         else
         {
@@ -95,37 +103,13 @@ public class PermissionsMissingActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == Constants.MULTIPLE_PERMISSIONS)
-        {
-
-            ArrayList<String> deniedPermissions = new ArrayList<>();
-            boolean hasDeniedPermissions = PermissionHelper.hasDeniedPermissions(permissions, grantResults, deniedPermissions);
-            if (!hasDeniedPermissions)
-            {
-                hasAllPermissions = true;
-                onBackPressed();
-            }
-            else
-            {
-                itemsAdapter.clear();
-                ArrayList<String> missingPermissionsName = getMissingPermissionsName(deniedPermissions);
-                itemsAdapter.addAll(missingPermissionsName);
-                itemsAdapter.notifyDataSetChanged();
-            }
-        }
-    }
     //endregion Other Overrides
     //endregion Overrides
 
     //region Listeners
     private void btnOpenConfigurationOnClickListener(View v)
     {
-        PermissionHelper.openAppSettings(this);
+        PermissionHelper.openAppSettings(PermissionsMissingActivity.this);
     }
     //endregion Listeners
 
@@ -151,25 +135,6 @@ public class PermissionsMissingActivity extends AppCompatActivity
             missingPermissions.add(permissionName);
         }
         return missingPermissions;
-    }
-
-    private void checkPermissions()
-    {
-        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
-        hasAllPermissions = missingPermissions.isEmpty();
-
-        if (hasAllPermissions)
-        {
-            finishAffinity();
-            finish();
-        }
-        else
-        {
-            itemsAdapter.clear();
-            ArrayList<String> missingPermissionsName = getMissingPermissionsName(missingPermissions);
-            itemsAdapter.addAll(missingPermissionsName);
-            itemsAdapter.notifyDataSetChanged();
-        }
     }
     //endregion Other Methods
 }
