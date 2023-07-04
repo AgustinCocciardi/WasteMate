@@ -27,6 +27,7 @@ import com.grupom2.wastemate.model.Status;
 import com.grupom2.wastemate.receiver.BluetoothDisabledBroadcastReceiver;
 import com.grupom2.wastemate.receiver.SafeBroadcastReceiver;
 import com.grupom2.wastemate.util.BroadcastUtil;
+import com.grupom2.wastemate.util.CustomProgressDialog;
 import com.grupom2.wastemate.util.NavigationUtil;
 import com.grupom2.wastemate.util.PermissionHelper;
 
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity
 
     //region Fields
     //region Controls
+    private CustomProgressDialog progressDialog;
     private TextView lblConnectedDeviceName;
     private TextView lblStatusDescription;
     private TextView lblCurrentPercentageHeader;
@@ -107,6 +109,7 @@ public class MainActivity extends AppCompatActivity
 
         //Se asigna un layout a la activity para poder vincular los distintos componentes.
         setContentView(R.layout.activity_main);
+        progressDialog = new CustomProgressDialog(MainActivity.this);
 
         // Se vinculan los controles a su correspondiente layout y se les asignan los listeners.
         doCreate();
@@ -327,6 +330,7 @@ public class MainActivity extends AppCompatActivity
         {
             //Cuando se completó la creación del servicio, obtener el singleton.
             bluetoothManager = BluetoothService.getInstance();
+            progressDialog.dismiss();
             //Se requiere bluetooth. Si no está activado ir a la activity que lo maneja.
             if (!bluetoothManager.isEnabled())
             {
@@ -394,7 +398,7 @@ public class MainActivity extends AppCompatActivity
         BroadcastUtil.registerLocalReceiver(this, deviceUnsupportedBroadcastReceiver, Actions.LOCAL_ACTION_UNSUPPORTED_DEVICE, Actions.LOCAL_ACTION_CONNECTION_CANCELED);
 
         showConnecting();
-
+        progressDialog.show();
         /* Se inicia el proceso de creación del servicio.
            Esto todavía no garantiza que el servicio esté creado. */
         startService();

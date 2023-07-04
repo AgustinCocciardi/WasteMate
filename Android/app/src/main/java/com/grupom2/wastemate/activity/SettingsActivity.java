@@ -219,6 +219,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
                     NavigationUtil.navigateToBluetoothRequiredActivity(this);
                 }
 
+                registerSensor();
                 if (bluetoothManager.isConnected())
                 {
                     registerSensor();
@@ -238,7 +239,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     protected void onPause()
     {
         super.onPause();
-        unregisterSensor();
+        //unregisterSensor();
     }
     //endregion Activity Life Cycle
 
@@ -250,6 +251,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         {
             adminSettingsLayout.setVisibility(View.GONE);
             mainSettingsLayout.setVisibility(View.VISIBLE);
+            btnScanStop.setVisibility(View.VISIBLE);
+            startScan();
             showingAdminSettings = false;
         }
         else
@@ -269,6 +272,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             {
                 adminSettingsLayout.setVisibility(View.VISIBLE);
                 mainSettingsLayout.setVisibility(View.GONE);
+                btnScanStop.setVisibility(View.INVISIBLE);
+                stopScan();
                 showingAdminSettings = true;
             }
         }
@@ -485,7 +490,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
             {
                 handleDeviceConnectionStatus(device.getAddress(), false);
                 customProgressDialog.dismiss();
-                unregisterSensor();
+                //unregisterSensor();
             }
         }
     }
