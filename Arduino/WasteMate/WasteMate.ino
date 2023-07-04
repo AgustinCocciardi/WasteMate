@@ -36,7 +36,7 @@
 #define MEDIAN_SAMPLE_SIZE 10         // TAMAÑO DE LA MEDIANA PARA LA CALIBRACION DE LOS SENSORES.
 #define CALIBRATION_TIME 30           // TIEMPO DE CALIBRACION DE LOS SENSORES.
 #define CALIBRATION_DELAY 1000        // DELAY PARA LA CALIBRACION DE LOS SENSORES.
-#define GENERAL_TIMEOUT_LIMIT 50      // TEMPORIZADOR PARA LECTURA DE SENSORES.
+#define GENERAL_TIMEOUT_LIMIT 100      // TEMPORIZADOR PARA LECTURA DE SENSORES.
 #define PRESENCE_TIMEOUT_LIMIT 5000   // TEMPORIZADOR PARA DETECCION DE PRESENCIA.
 #define MINIMUM_STATE_INDEX 0         // INDICE INFERIOR DE LA MATRIZ DE ESTADOS.
 #define MAXIMUM_STATE_INDEX 3         // INDICE SUPERIOR DE LA MATRIZ DE ESTADOS.
@@ -87,9 +87,7 @@
 
 #define CODE_UPDATE_STATUS "update"
 #define CODE_ACK "ack"
-#define CODE_ERROR "error"
-#define CODE_CALIBRATION_STARTED "calst"
-#define CODE_CALIBRATION_FINISHED "calend"
+#define CODE_CALIBRATION_FINISHED "cal_end"
 
 #define COMMAND_KEY_CODE "c"
 #define COMMAND_KEY_DATA "d"
@@ -98,6 +96,7 @@
 #define COMMAND_KEY_MAXIMUM_WEIGHT "mw"
 #define COMMAND_KEY_CONTAINER_SIZE "cs"
 #define COMMAND_KEY_CURRENT_PERCENTAGE "p"
+#define COMMAND_KEY_IS_CALIBRATING "ic"
 
 // TIPOS DE DATOS
 typedef enum status
@@ -136,8 +135,8 @@ typedef struct st_timer
 typedef struct st_bluetooth_data
 {
   int maximum_weight;
-  double critical_percentage;
-  double full_percentage;
+  float critical_percentage;
+  float full_percentage;
 } t_bluetooth_data;
 
 typedef struct st_bluetooth_message
@@ -150,8 +149,8 @@ typedef struct st_bluetooth_response
 {
   String code;
   int maximum_weight;
-  double critical_percentage;
-  double full_percentage;
+  float critical_percentage;
+  float full_percentage;
   int container_size;
   String status;
 } t_bluetooth_response;
@@ -180,22 +179,18 @@ void reset_timer(t_timer *timer);
 void move_servomotor(byte degrees);
 void initialize();
 long get_echo(int pin);
-double get_distance(int pin);
+float get_distance(int pin);
 void show_status(t_status status);
 void log_current_status();
-void log(const char *message);
 void calibrate_pir();
 void calibrate_flex_sensor();
 void calibrate_ultrasonic_sensor();
-int calculate_median(double *arr, size_t size);
-void insertion_sort(double *arr, size_t size);
-void update_display(String message);
+int calculate_median(float *arr, size_t size);
+void insertion_sort(float *arr, size_t size);
 void display_print_optimal_split(const String &message);
 int find_optimal_split_index(const String &message, int maxChars);
 bool try_deserialize(String serializedData, t_bluetooth_message *output);
 bool process_detection(int *detection_counter, t_event transition_event);
-void notify(DynamicJsonDocument doc);
-void calibration_started();
 void calibration_finished();
 
 // VARIABLES GLOBALES
@@ -207,9 +202,10 @@ int container_size = DEFAULT_CONTAINER_SIZE;
 int flex_max_value = DEFAULT_MAXIMUM_FLEX_VALUE;
 int flex_min_value = DEFAULT_MINIMUM_FLEX_VALUE;
 
-double critical_percentage = DEFAULT_CRITICAL_PERCENTAGE;
-double full_percentage = DEFAULT_FULL_PERCENTAGE;
+float critical_percentage = DEFAULT_CRITICAL_PERCENTAGE;
+float full_percentage = DEFAULT_FULL_PERCENTAGE;
 int maximum_weight_allowed = DEFAULT_MAXIMUM_WEIGHT_ALLOWED;
+boolean is_calibrating = false;
 
 int is_open = 0;
 int presence_detection_counter = 0;
@@ -217,7 +213,7 @@ int critical_capacity_detection_counter = 0;
 int full_capacity_detection_counter = 0;
 int maximum_weight_detection_counter = 0;
 int capacity_available_detection_counter = 0;
-double current_percentage = 0.0;
+float current_percentage = 0.0;
 
 PWMServo servo;
 rgb_lcd display;
@@ -234,62 +230,53 @@ byte index_verification;
 
 // MAQUINA DE ESTADO
 t_actions action[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
-    {
-        {none, close, open, disable, none, none, disable, error, none, error},    // ST_UNF
-        {none, close, open, disable, none, none, disable, error, error, disable}, // ST_CRIT_CAP
-        {none, none, none, none, none, none, none, none, error, none},            // ST_NO_CAP
-        {none, none, none, none, none, none, none, error, reset, error},          // ST_MAINT
-                                                                                  // EV_CONT        EV_NPD      EV_PD      EV_MAX_WR      EV_UNF      EV_CCR      EV_MCR        EV_SM               EV_MF      EV_DIS                 EV_CON_REQ
+{
+  {none,      close,    open,   disable,    none,     none,   disable,  error,  none,   error   },// ST_UNF
+  {none,      close,    open,   disable,    none,     none,   disable,  error,  error,  disable },// ST_CRIT_CAP
+  {none,      none,     none,   none,       none,     none,   none,     none,   error,  none    },// ST_NO_CAP
+  {none,      none,     none,   none,       none,     none,   none,     error,  reset,  error   },// ST_MAINT
+  // EV_CONT  EV_NPD    EV_PD   EV_MAX_WR   EV_UNF    EV_CCR  EV_MCR    EV_SM   EV_MF   EV_DIS
 };
 
 t_status transition[MAXIMUM_STATE_INDEX + 1][MAXIMUM_EVENT_INDEX + 1] =
-    {
-        {
-            ST_UNF,
-            ST_UNF,
-            ST_UNF,
-            ST_NO_CAP,
-            ST_UNF,
-            ST_CRIT_CAP,
-            ST_NO_CAP,
-            ST_UNF,
-            ST_UNF,
-            ST_UNF,
-
-        },                                                                                                                       // ST_UNF
-        {ST_CRIT_CAP, ST_CRIT_CAP, ST_CRIT_CAP, ST_NO_CAP, ST_UNF, ST_CRIT_CAP, ST_NO_CAP, ST_CRIT_CAP, ST_CRIT_CAP, ST_NO_CAP}, // ST_CRIT_CAP
-        {ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_NO_CAP, ST_MAINT, ST_NO_CAP, ST_NO_CAP},           // ST_NO_CAP
-        {ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_MAINT, ST_UNF, ST_MAINT},                      // ST_MAINT
-                                                                                                                                 // EV_CONT        EV_NPD           EV_PD            EV_MAX_WR      EV_UNF         EV_CCR           EV_MCR         EV_SM            EV_MF            EV_DIS
+{
+  {ST_UNF,        ST_UNF,       ST_UNF,       ST_NO_CAP,  ST_UNF,       ST_CRIT_CAP,  ST_NO_CAP,  ST_UNF,       ST_UNF,       ST_UNF,   },// ST_UNF
+  {ST_CRIT_CAP,   ST_CRIT_CAP,  ST_CRIT_CAP,  ST_NO_CAP,  ST_UNF,       ST_CRIT_CAP,  ST_NO_CAP,  ST_CRIT_CAP,  ST_CRIT_CAP,  ST_NO_CAP }, // ST_CRIT_CAP
+  {ST_NO_CAP,     ST_NO_CAP,    ST_NO_CAP,    ST_NO_CAP,  ST_NO_CAP,    ST_NO_CAP,    ST_NO_CAP,  ST_MAINT,     ST_NO_CAP,    ST_NO_CAP },// ST_NO_CAP
+  {ST_MAINT,      ST_MAINT,     ST_MAINT,     ST_MAINT,   ST_MAINT,     ST_MAINT,     ST_MAINT,   ST_MAINT,     ST_UNF,       ST_MAINT  },// ST_MAINT
+  // EV_CONT      EV_NPD        EV_PD         EV_MAX_WR   EV_UNF        EV_CCR        EV_MCR      EV_SM         EV_MF         EV_DIS
 };
 
 const char *STATUS_DESCRIPTION[] =
-    {
-        "CAPACIDAD DISPONIBLE",
-        "CAPACIDAD CRITICA",
-        "SIN CAPACIDAD",
-        "EN MANTENIMIENTO"};
+{
+  "CAPACIDAD DISPONIBLE",
+  "CAPACIDAD CRITICA",
+  "SIN CAPACIDAD",
+  "EN MANTENIMIENTO"
+};
 
 const char *EVENT_DESCRIPTION[] =
-    {
-        "CONTINUAR",
-        "SIN PRESENCIA",
-        "PRESENCIA DETECTADA",
-        "PESO MAXIMO ALCANZADO",
-        "CAPACIDAD DISPONIBLE",
-        "CAPACIDAD CRITICA ALCANZADA",
-        "CAPACIDAD MAXIMA ALCANZADA",
-        "ENVIAR A MANTENIMIENTO",
-        "MANTENIMIENTO TERMINADO",
-        "DESHABILITAR TACHO",
-        "SOLICITUD DE CONEXION"};
+{
+  "CONTINUAR",
+  "SIN PRESENCIA",
+  "PRESENCIA DETECTADA",
+  "PESO MAXIMO ALCANZADO",
+  "CAPACIDAD DISPONIBLE",
+  "CAPACIDAD CRITICA ALCANZADA",
+  "CAPACIDAD MAXIMA ALCANZADA",
+  "ENVIAR A MANTENIMIENTO",
+  "MANTENIMIENTO TERMINADO",
+  "DESHABILITAR TACHO",
+  "SOLICITUD DE CONEXION"
+};
 
 t_verification verification[MAXIMUM_INDEX_VERIFICATIONS] =
-    {
-        verify_presence,
-        verify_weight,
-        verify_message,
-        verify_capacity};
+{
+  verify_presence,
+  verify_weight,
+  verify_message,
+  verify_capacity
+};
 
 // INICIALIZACION
 void setup()
@@ -297,19 +284,22 @@ void setup()
   Serial.begin(9600);
   bluetooth_serial.begin(9600);
 
-  // set up the LCD's number of columns and rows:
   display.begin(16, 2);
   display.setRGB(colorR, colorG, colorB);
   display_print_optimal_split("INICIANDO");
+
   pinMode(PIR_SENSOR, INPUT);
   pinMode(FLEX_SENSOR, INPUT);
   pinMode(ULTRASONIC_SENSOR_TRIGGER, INPUT);
+
   servo.attach(SERVOMOTOR);
 
   timer_general.limit = GENERAL_TIMEOUT_LIMIT;
   timer_presence.limit = PRESENCE_TIMEOUT_LIMIT;
   timer_connection_request.limit = PRESENCE_TIMEOUT_LIMIT;
+
   initialize();
+  
   current_state = ST_UNF;
   previous_state = ST_UNF;
 
@@ -349,7 +339,11 @@ void get_event()
     reset_timer(&timer_general);
     int index = (index_verification % MAXIMUM_INDEX_VERIFICATIONS);
     index_verification++;
-    verification[index]();
+    bool result = verification[index]();
+    if(!result)
+    {
+      current_event = EV_CONT;
+    }
   }
   else
   {
@@ -368,14 +362,16 @@ bool verify_presence()
     if (presence_detected)
     {
       reset_timer(&timer_presence);
+      return true;
     }
-    return true;
+    return false;
   }
   else
   {
     if (timer_presence.current_time > 0 && timeout_reached(&timer_presence))
     {
       current_event = EV_NPD;
+      return true;
     }
     return false;
   }
@@ -392,6 +388,7 @@ bool verify_weight()
   if (currentWeight >= maximum_weight_allowed)
   {
     process_detection(&maximum_weight_detection_counter, EV_MAX_WR);
+    return true;
   }
   return false;
 }
@@ -404,7 +401,7 @@ bool verify_message()
   if (bluetooth_serial.available())
   {
     // se los lee y se los muestra en el monitor serie
-    String read = bluetooth_serial.readString();
+    String read = bluetooth_serial.readStringUntil('\n');
     debug_println(read);
     bluetooth_serial.flush();
     read.trim();
@@ -414,23 +411,33 @@ bool verify_message()
 
     if (success)
     {
-      process_command(&bluetooth_message);
+      return process_command(&bluetooth_message);
     }
+    else
+    {
+      return false;
+    }
+  }
+  else
+  {
+    return false;
   }
 }
 
 // Verifica el volumen ocupado.
 bool verify_capacity()
 {
-  double distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
-  current_percentage = 1 - (distance / (double)container_size);
+  float distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
+  current_percentage = 1 - (distance / (float)container_size);
   if (current_percentage >= full_percentage)
   {
     if (process_detection(&full_capacity_detection_counter, EV_MCR))
     {
       critical_capacity_detection_counter = 0;
       capacity_available_detection_counter = 0;
+      return true;
     }
+    return false;
   }
   else if (current_percentage >= critical_percentage)
   {
@@ -438,7 +445,9 @@ bool verify_capacity()
     {
       full_capacity_detection_counter = 0;
       capacity_available_detection_counter = 0;
+      return true;
     }
+    return false;
   }
   else if (current_percentage < critical_percentage)
   {
@@ -446,9 +455,10 @@ bool verify_capacity()
     {
       full_capacity_detection_counter = 0;
       critical_capacity_detection_counter = 0;
+      return true;
     }
   }
-  return true;
+  return false;
 }
 
 bool process_detection(int *detection_counter, t_event transition_event)
@@ -463,50 +473,54 @@ bool process_detection(int *detection_counter, t_event transition_event)
   return false;
 }
 
-void process_command(const t_bluetooth_message *bluetooth_message)
+bool process_command(const t_bluetooth_message *bluetooth_message)
 {
   switch (bluetooth_message->code)
   {
     case CODE_UPDATE_REQUESTED:
       notify_state();
-    break;
-  case CODE_START_MAINTENANCE:
-    current_event = EV_SM;
-    break;
+      break;
+    case CODE_START_MAINTENANCE:
+      current_event = EV_SM;
+      return true;
+      break;
 
-  case CODE_DISABLE:
-    current_event = EV_DIS;
-    break;
+    case CODE_DISABLE:
+      current_event = EV_DIS;
+      return true;
+      break;
 
-  case CODE_MAINTENANCE_FINISHED:
-    current_event = EV_MF;
-    break;
+    case CODE_MAINTENANCE_FINISHED:
+      current_event = EV_MF;
+      return true;
+      break;
 
-  case CODE_CONFIGURE_THRESHOLDS:
-    debug_println(bluetooth_message->data.full_percentage);
-    debug_println(bluetooth_message->data.critical_percentage);
-    debug_println(bluetooth_message->data.maximum_weight);
-    full_percentage = bluetooth_message->data.full_percentage;
-    critical_percentage = bluetooth_message->data.critical_percentage;
-    maximum_weight_allowed = bluetooth_message->data.maximum_weight;
-    break;
+    case CODE_CONFIGURE_THRESHOLDS:
+      debug_println(bluetooth_message->data.full_percentage);
+      debug_println(bluetooth_message->data.critical_percentage);
+      debug_println(bluetooth_message->data.maximum_weight);
+      full_percentage = bluetooth_message->data.full_percentage;
+      critical_percentage = bluetooth_message->data.critical_percentage;
+      maximum_weight_allowed = bluetooth_message->data.maximum_weight;
+      break;
 
-  case CODE_CONNECTION_REQUESTED:
-    confirm_connection();
-    break;
-  case CODE_CALIBRATE_PIR:
-    calibrate_pir();
-    break;
-  case CODE_CALIBRATE_MAXIMUM_CAPACITY:
-    calibrate_ultrasonic_sensor();
-    break;
-  case CODE_CALIBRATE_WEIGHT:
-    calibrate_flex_sensor();
-    break;
-  default:
-    debug_println("COMANDO NO RECONOCIDO");
-    break;
+    case CODE_CONNECTION_REQUESTED:
+      confirm_connection();
+      break;
+    case CODE_CALIBRATE_PIR:
+      calibrate_pir();
+      break;
+    case CODE_CALIBRATE_MAXIMUM_CAPACITY:
+      calibrate_ultrasonic_sensor();
+      break;
+    case CODE_CALIBRATE_WEIGHT:
+      calibrate_flex_sensor();
+      break;
+    default:
+      debug_println("COMANDO NO RECONOCIDO");
+      break;
   }
+  return false;
 }
 
 bool try_deserialize(String serializedData, t_bluetooth_message *output)
@@ -603,7 +617,7 @@ void move_servomotor(byte degrees)
 }
 
 // Obtiene la distancia en centímetros utilizando el factor de conversión.
-double get_distance(int pin)
+float get_distance(int pin)
 {
   return PULSE_DURATION_TO_DISTANCE_FACTOR * get_echo(pin);
 }
@@ -631,13 +645,14 @@ void show_status(t_status status)
 // Notifica el estado actual.
 void notify_state()
 {
-  DynamicJsonDocument doc(100);
+  DynamicJsonDocument doc(150);
   doc[COMMAND_KEY_CODE] = CODE_UPDATE_STATUS;
   doc[COMMAND_KEY_CRITICAL_PERCENTAGE] = critical_percentage;
   doc[COMMAND_KEY_FULL_PERCENTAGE] = full_percentage;
   doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
+  doc[COMMAND_KEY_IS_CALIBRATING] = is_calibrating;
   serializeJson(doc, bluetooth_serial);
 }
 
@@ -650,27 +665,19 @@ void confirm_connection()
   doc[COMMAND_KEY_MAXIMUM_WEIGHT] = maximum_weight_allowed;
   doc[COMMAND_KEY_DATA] = STATUS_DESCRIPTION[current_state];
   doc[COMMAND_KEY_CURRENT_PERCENTAGE] = current_percentage;
+  doc[COMMAND_KEY_IS_CALIBRATING] = is_calibrating;  
   serializeJson(doc, bluetooth_serial);
 }
 
 // Notifica la ocurrencia de un error.
 void error()
 {
-  DynamicJsonDocument doc(20);
-  doc[COMMAND_KEY_CODE] = CODE_ERROR;
-  doc[COMMAND_KEY_DATA] = MESSAGE_ERROR;
-  serializeJson(doc, bluetooth_serial);
-}
-
-void calibration_started()
-{
-  DynamicJsonDocument doc(20);
-  doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_STARTED;
-  serializeJson(doc, bluetooth_serial);
+  debug_println(MESSAGE_ERROR);
 }
 
 void calibration_finished()
 {
+  is_calibrating = false;
   DynamicJsonDocument doc(20);
   doc[COMMAND_KEY_CODE] = CODE_CALIBRATION_FINISHED;
   serializeJson(doc, bluetooth_serial);
@@ -687,7 +694,7 @@ void log_current_status()
 
 void calibrate_pir()
 {
-  calibration_started();
+  is_calibrating = true;
   display_print_optimal_split("CALIBRANDO PIR");
   bool is_calibrated = false;
   int calibrationProgress = 0;
@@ -715,12 +722,12 @@ void calibrate_pir()
 
 void calibrate_ultrasonic_sensor()
 {
-  calibration_started();
+  is_calibrating = true;
   display_print_optimal_split("CALIBRANDO CAPACIDAD");
-  double sample[MEDIAN_SAMPLE_SIZE];
+  float sample[MEDIAN_SAMPLE_SIZE];
   for (int i = 0; i < MEDIAN_SAMPLE_SIZE; i++)
   {
-    double distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
+    float distance = get_distance(ULTRASONIC_SENSOR_TRIGGER);
     sample[i] = distance;
     delay(CALIBRATION_DELAY);
   }
@@ -735,7 +742,7 @@ void calibrate_flex_sensor()
   flex_min_value = MAXIMUM_DIGITAL_VALUE;
   flex_max_value = MINIMUM_DIGITAL_VALUE;
 
-  calibration_started();
+  is_calibrating = true;
   display_print_optimal_split("CALIBRANDO PESO MINIMO");
   for (int i = 0; i < MEDIAN_SAMPLE_SIZE; i++)
   {
@@ -760,11 +767,11 @@ void calibrate_flex_sensor()
 }
 
 // Algoritmo de ordenación por inserción.
-void insertion_sort(double *arr, size_t size)
+void insertion_sort(float *arr, size_t size)
 {
   for (size_t i = 1; i < size; ++i)
   {
-    double key = arr[i];
+    float key = arr[i];
     size_t j = i;
     while (j > 0 && arr[j - 1] > key)
     {
@@ -776,7 +783,7 @@ void insertion_sort(double *arr, size_t size)
 }
 
 // Se calcula la mediana del array ordenandolo y tomando el o los valores intermedios.
-int calculate_median(double *arr, size_t size)
+int calculate_median(float *arr, size_t size)
 {
   // Se ordena el array.
   insertion_sort(arr, size);

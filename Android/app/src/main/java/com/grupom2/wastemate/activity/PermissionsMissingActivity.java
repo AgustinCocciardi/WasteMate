@@ -1,18 +1,13 @@
 package com.grupom2.wastemate.activity;
 
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.grupom2.wastemate.R;
@@ -95,6 +90,8 @@ public class PermissionsMissingActivity extends AppCompatActivity
     @Override
     public void onBackPressed()
     {
+        ArrayList<String> missingPermissions = PermissionHelper.getPermissionsMissing(this);
+        hasAllPermissions = missingPermissions.isEmpty();
         if (hasAllPermissions)
         {
             super.onBackPressed();
@@ -106,40 +103,13 @@ public class PermissionsMissingActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == Constants.MULTIPLE_PERMISSIONS)
-        {
-
-            ArrayList<String> deniedPermissions = new ArrayList<>();
-            boolean hasDeniedPermissions = PermissionHelper.hasDeniedPermissions(permissions, grantResults, deniedPermissions);
-            if (!hasDeniedPermissions)
-            {
-                hasAllPermissions = true;
-                onBackPressed();
-            }
-            else
-            {
-                itemsAdapter.clear();
-                ArrayList<String> missingPermissionsName = getMissingPermissionsName(deniedPermissions);
-                itemsAdapter.addAll(missingPermissionsName);
-                itemsAdapter.notifyDataSetChanged();
-            }
-        }
-    }
     //endregion Other Overrides
     //endregion Overrides
 
     //region Listeners
     private void btnOpenConfigurationOnClickListener(View v)
     {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-        startActivity(intent);
+        PermissionHelper.openAppSettings(PermissionsMissingActivity.this);
     }
     //endregion Listeners
 

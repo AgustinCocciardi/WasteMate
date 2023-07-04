@@ -8,7 +8,7 @@
                     <corners android:radius="10dp" />
                 </shape>
             </item>
-            <item android:drawable="@drawable/baseline_refresh_24_black"/>
+            <item android:drawable="@drawable/baseline_refresh_24_black" />
         </layer-list>
     </item>
     <item>
@@ -27,7 +27,7 @@
                             <corners android:radius="10dp" />
                         </shape>
                     </item>
-                    <item android:drawable="@drawable/baseline_refresh_24_white"/>
+                    <item android:drawable="@drawable/baseline_refresh_24_white" />
                 </layer-list>
             </item>
         </ripple>

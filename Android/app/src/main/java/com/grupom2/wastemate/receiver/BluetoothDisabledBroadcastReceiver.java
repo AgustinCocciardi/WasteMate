@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 
+import com.grupom2.wastemate.bluetooth.BluetoothManager;
+import com.grupom2.wastemate.bluetooth.BluetoothService;
 import com.grupom2.wastemate.util.NavigationUtil;
 
 public class BluetoothDisabledBroadcastReceiver extends FilteredBroadcastReceiver
@@ -23,6 +25,11 @@ public class BluetoothDisabledBroadcastReceiver extends FilteredBroadcastReceive
             int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
             if (state == BluetoothAdapter.STATE_OFF)
             {
+                BluetoothManager manager = BluetoothService.getInstance();
+                if (manager != null)
+                {
+                    manager.disconnect();
+                }
                 NavigationUtil.navigateToBluetoothRequiredActivity(context);
             }
         }

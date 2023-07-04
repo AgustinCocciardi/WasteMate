@@ -1,21 +1,22 @@
 package com.grupom2.wastemate.adapter;
 
+import static com.grupom2.wastemate.adapter.PairedDeviceListAdapter.PairedDeviceViewHolder;
+
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
 import com.grupom2.wastemate.R;
 import com.grupom2.wastemate.bluetooth.BluetoothService;
 
-public class PairedDeviceListAdapter extends BaseDeviceListAdapter<PairedDeviceListAdapter.PairedDeviceViewHolder>
+public class PairedDeviceListAdapter extends BaseDeviceListAdapter<PairedDeviceViewHolder>
 {
     private OnClickListener onUnpairDeviceClickListener;
-private Context context;
+    private final Context context;
 
     public PairedDeviceListAdapter(Context context)
     {

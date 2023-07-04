@@ -1,6 +1,5 @@
 package com.grupom2.wastemate.util;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.grupom2.wastemate.receiver.FilteredBroadcastReceiver;
+import com.grupom2.wastemate.receiver.SafeBroadcastReceiver;
 
 import java.io.Serializable;
 
@@ -39,34 +39,34 @@ public class BroadcastUtil
         return (type.isInstance(data) ? type.cast(data) : null);
     }
 
-    public static void registerLocalReceiver(Context context, BroadcastReceiver receiver, String... actions)
+    public static void registerLocalReceiver(Context context, SafeBroadcastReceiver receiver, String... actions)
     {
         IntentFilter intentFilter = new IntentFilter();
         for (String action : actions)
         {
             intentFilter.addAction(action);
         }
-        LocalBroadcastManager.getInstance(context).registerReceiver(receiver, intentFilter);
+        receiver.registerLocal(context, intentFilter);
     }
 
-    public static void unregisterLocalReceiver(Context context, BroadcastReceiver receiver)
+    public static void unregisterLocalReceiver(Context context, SafeBroadcastReceiver receiver)
     {
-        LocalBroadcastManager.getInstance(context).unregisterReceiver(receiver);
+        receiver.unregisterLocal(context);
     }
 
-    public static void registerReceiver(Context context, BroadcastReceiver receiver, String... actions)
+    public static void registerReceiver(Context context, SafeBroadcastReceiver receiver, String... actions)
     {
-        context.registerReceiver(receiver, getIntentFilterForActions(actions));
+        receiver.register(context, getIntentFilterForActions(actions));
     }
 
     public static void registerReceiver(Context context, FilteredBroadcastReceiver receiver)
     {
-        context.registerReceiver(receiver, receiver.getIntentFilter());
+        receiver.register(context, receiver.getIntentFilter());
     }
 
-    public static void unregisterReceiver(Context context, BroadcastReceiver receiver)
+    public static void unregisterReceiver(Context context, SafeBroadcastReceiver receiver)
     {
-        context.unregisterReceiver(receiver);
+        receiver.unregister(context);
     }
 
     public static IntentFilter getIntentFilterForActions(String... actions)

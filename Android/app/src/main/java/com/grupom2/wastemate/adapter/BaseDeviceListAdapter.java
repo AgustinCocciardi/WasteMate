@@ -9,11 +9,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.grupom2.wastemate.R;
+import com.grupom2.wastemate.constant.Constants;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.grupom2.wastemate.constant.Constants;
-import com.grupom2.wastemate.R;
 
 
 public class BaseDeviceListAdapter<T extends BaseDeviceListAdapter.BaseDeviceViewHolder> extends RecyclerView.Adapter<T>
@@ -57,15 +57,11 @@ public class BaseDeviceListAdapter<T extends BaseDeviceListAdapter.BaseDeviceVie
         }
         holder.lblDeviceName.setText(deviceName == null || deviceName.isEmpty() ? deviceAddress : deviceName);
         holder.lblDeviceAddress.setText(deviceAddress);
-        holder.itemView.setOnClickListener(new View.OnClickListener()
+        holder.itemView.setOnClickListener(view ->
         {
-            @Override
-            public void onClick(View view)
+            if (onItemClickedListener != null)
             {
-                if (onItemClickedListener != null)
-                {
-                    onItemClickedListener.onClick(position, device);
-                }
+                onItemClickedListener.onClick(position, device);
             }
         });
         return device;
