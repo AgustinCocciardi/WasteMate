@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity
     private final ServiceStartedBroadcastReceiver serviceStartedBroadcastReceiver;
     private final UpdateStatusBroadcastReceiver updateStatusBroadcastReceiver;
     private final DeviceDisconnectedBroadcastReceiver bluetoothDeviceDisconnectedReceiver;
-    private final SafeBroadcastReceiver deviceUnsupportedBroadcastReceiver;
+    private final DeviceUnsupportedBroadcastReceiver deviceUnsupportedBroadcastReceiver;
     //endregion BroadcastReceivers
 
     //region Other Fields

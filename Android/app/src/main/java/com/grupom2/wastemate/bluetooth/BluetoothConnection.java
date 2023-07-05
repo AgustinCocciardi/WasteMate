@@ -68,7 +68,8 @@ public class BluetoothConnection
             if (!isWriting)
             {
                 isWriting = true;
-                writeData(msgBuffer);
+                Thread writingThread = new Thread(() -> writeData(msgBuffer));
+                writingThread.start();
                 startTimer();
             }
         }
@@ -381,7 +382,7 @@ public class BluetoothConnection
 
                         BluetoothMessageResponse response = readUnsafe(inputStream);
 
-                        if (response != null)
+                        if (response != null && response.getCode().equals(Actions.ARDUINO_ACTION_ACK))
                         {
                             ackReceived = true;
                             deviceData.setData(response.getData(), response.getCriticalPercentage(), response.getFullPercentage(), response.getCurrentPercentage(), response.getMaximumWeight(), response.getIsCalibrating());
@@ -412,7 +413,7 @@ public class BluetoothConnection
     private class SocketReader
     {
         private HandlerThread handlerThread;
-        private Handler handler;
+        private ReadingHandler handler;
 
         public void start()
         {
@@ -426,8 +427,8 @@ public class BluetoothConnection
         {
             if (handler != null)
             {
+                handler.stop();
                 handler.removeCallbacksAndMessages(null);
-
             }
             if (handlerThread != null)
             {
@@ -438,15 +439,22 @@ public class BluetoothConnection
         private class ReadingHandler extends Handler
         {
             private static final int CONNECTION_INTERVAL = 50;
+            private boolean isRunning;
 
             public ReadingHandler(Looper looper)
             {
                 super(looper);
+                isRunning = true;
             }
 
             @Override
             public void handleMessage(android.os.Message msg)
             {
+                if (!isRunning)
+                {
+                    return;
+                }
+
                 synchronized (socketLock)
                 {
                     try
@@ -476,6 +484,11 @@ public class BluetoothConnection
                     }
                     BroadcastUtil.sendLocalBroadcast(context, action, new BluetoothDeviceData(deviceData));
                 }
+            }
+
+            public void stop()
+            {
+                isRunning = false;
             }
         }
     }
