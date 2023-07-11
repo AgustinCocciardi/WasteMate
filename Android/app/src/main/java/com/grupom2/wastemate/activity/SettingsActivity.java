@@ -104,6 +104,7 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
 
     //region Other Fields
     private static final float PRECISION_CHANGE = 20;
+    private static final float TO_PERCENTAGE = 100;
     private SensorManager sensor;
     private boolean showingAdminSettings;
     private boolean isSensorRegistered;
@@ -397,8 +398,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
         }
 
         int weightLimit = Integer.parseInt(txtMaximumWeight.getText().toString());
-        double minimumDistance = Integer.parseInt(txtFullPercentage.getText().toString()) / 100.0; //TODO: sacar numero mágico
-        double criticalDistance = Integer.parseInt(txtCriticalPercentage.getText().toString()) / 100.0;
+        double minimumDistance = Integer.parseInt(txtFullPercentage.getText().toString()) / TO_PERCENTAGE;
+        double criticalDistance = Integer.parseInt(txtCriticalPercentage.getText().toString()) / TO_PERCENTAGE;
         BluetoothMessage message = new BluetoothMessage(Constants.CODE_CONFIGURE_THRESHOLDS, weightLimit, minimumDistance, criticalDistance);
         BluetoothService.getInstance().write(message);
 
@@ -693,8 +694,8 @@ public class SettingsActivity extends AppCompatActivity implements SensorEventLi
     private void initializeForm(BluetoothDeviceData deviceData)
     {
         setFormattedText(txtMaximumWeight, deviceData.getMaxAllowedWeight());
-        setFormattedText(txtCriticalPercentage, deviceData.getCriticalPercentage() * 100);
-        setFormattedText(txtFullPercentage, deviceData.getFullPercentage() * 100);
+        setFormattedText(txtCriticalPercentage, deviceData.getCriticalPercentage() * TO_PERCENTAGE);
+        setFormattedText(txtFullPercentage, deviceData.getFullPercentage() * TO_PERCENTAGE);
     }
 
     private void setFormattedText(TextView txtMaximumWeight, double deviceData)
